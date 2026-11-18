@@ -1,0 +1,236 @@
+{
+  "world": "Monde 3 · Bloc collant et essieu",
+  "levels": [
+    {
+      "lot": "Le bloc collant",
+      "stage": "Découverte",
+      "name": "Ça colle",
+      "map": [
+        "#############",
+        "#P.S.C....###",
+        "#######.#####",
+        "#######E#####",
+        "#############"
+      ],
+      "teach": [
+        "Un bloc collant (tacheté) se colle au premier bloc qui le touche. Les deux forment un groupe qui se pousse d'un seul coup.",
+        "Sans la colle, impossible de pousser deux blocs à la fois : le couloir resterait bouché."
+      ],
+      "hint": "Pousse le carré contre le bloc collant, puis pousse le groupe au-delà du passage.",
+      "solution": "RRRRRRDD"
+    },
+    {
+      "lot": "Le bloc collant",
+      "stage": "Approfondissement",
+      "name": "Ne pas toucher",
+      "map": [
+        "##########",
+        "#...C....#",
+        "#.S......#",
+        "#P.......#",
+        "######O###",
+        "######E###",
+        "##########"
+      ],
+      "teach": [
+        "Le bloc collant colle au moindre contact, même sur le côté.",
+        "Un groupe ne tombe dans un trou que s'il est entièrement au-dessus du vide : collé, le carré ne pourrait plus boucher ce trou seul."
+      ],
+      "hint": "Fais passer le carré loin du bloc collant, par la rangée du bas.",
+      "solution": "UURDLDRRRRURDDD"
+    },
+    {
+      "lot": "Le bloc collant",
+      "stage": "Approfondissement",
+      "name": "Pont volant",
+      "map": [
+        "###########",
+        "#.SO..O.OE#",
+        "#P.C....O##",
+        "#...O...###",
+        "###########"
+      ],
+      "teach": [
+        "Un groupe passe au-dessus d'un trou tant qu'une partie reste sur le sol, et tombe quand il est entièrement au-dessus du vide.",
+        "Le joueur ne peut pas suivre un bloc suspendu au-dessus du vide : il faut pousser l'autre bloc du groupe."
+      ],
+      "hint": "D'abord : pousser le carré vers la droite. Ensuite : pousser le carré vers la gauche.",
+      "solution": "RRRRDRRULLLLDLLURRRRRRURR"
+    },
+    {
+      "lot": "Le bloc collant",
+      "stage": "Twist",
+      "name": "Détacher",
+      "map": [
+        "##########",
+        "#P.R..B###",
+        "#..O..C.##",
+        "#...#...##",
+        "######O###",
+        "######E###",
+        "##########"
+      ],
+      "teach": [
+        "Briser un bloc d'un groupe libère son partenaire.",
+        "Le carré libéré a perdu sa colle : seul, il peut enfin boucher le trou.",
+        "Il y a plusieurs façons de lancer le rond, mais une seule brise le bon bloc au bon moment."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le carré vers la gauche.",
+      "solution": "RRRDRDRRULULLDRURDDDD"
+    },
+    {
+      "lot": "L'essieu",
+      "stage": "Découverte",
+      "name": "Essieu",
+      "map": [
+        "##########",
+        "#.G.O..OE#",
+        "#PR....O##",
+        "##########"
+      ],
+      "teach": [
+        "Deux ronds collés côte à côte forment un essieu : poussés dans la largeur, ils roulent ensemble.",
+        "Comme tout groupe, l'essieu passe au-dessus d'un trou si une seule bille est au-dessus du vide."
+      ],
+      "hint": "Pousse l'essieu vers la droite.",
+      "solution": "RRRRURRR"
+    },
+    {
+      "lot": "L'essieu",
+      "stage": "Approfondissement",
+      "name": "Dans la longueur",
+      "map": [
+        "########",
+        "#P.....#",
+        "#.GR...#",
+        "#......#",
+        "#......#",
+        "####OO##",
+        "####E###",
+        "########"
+      ],
+      "teach": [
+        "Poussé dans la longueur, un essieu ne roule pas : il glisse d'une case, comme un carré.",
+        "C'est le moyen de le placer précisément avant de le lancer dans la largeur."
+      ],
+      "hint": "Fais glisser l'essieu de deux cases vers la droite, puis lance-le vers le bas.",
+      "solution": "DRRURDDDDD"
+    },
+    {
+      "lot": "L'essieu",
+      "stage": "Approfondissement",
+      "name": "Au passage",
+      "map": [
+        "###########",
+        "#..OG.OOOE#",
+        "#PRR.OGOO##",
+        "#...OG.O###",
+        "###########"
+      ],
+      "teach": [
+        "Un rond qui roule s'agrippe au rond collant qu'il frôle, et l'emporte avec lui en essieu.",
+        "Seul, chaque rond serait tombé dans le premier trou de sa rangée.",
+        "Plusieurs ronds collants, plusieurs rangées de trous : il faut choisir quel rond emporte quel collant."
+      ],
+      "hint": "D'abord : pousser le rond vers le bas. Ensuite : pousser le rond vers la droite.",
+      "solution": "URDLDRRRRLLLURDRRRURRUR"
+    },
+    {
+      "lot": "L'essieu",
+      "stage": "Approfondissement",
+      "name": "Butée sur le côté",
+      "map": [
+        "##########",
+        "#...#....#",
+        "#PR......#",
+        "####.C.O##",
+        "####.OO###",
+        "#####O####",
+        "#####E####",
+        "##########"
+      ],
+      "teach": [
+        "Un rond qui frôle un carré collant s'y agrippe et s'arrête net : une butée sur le côté du trajet.",
+        "Rond et carré collés forment un groupe qui se pousse comme un carré, et qui ne tombe que dans deux trous à la fois."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le rond vers la gauche.",
+      "solution": "RRRRURRDLULDDDDD"
+    },
+    {
+      "lot": "L'essieu",
+      "stage": "Approfondissement",
+      "name": "Décaler l'essieu",
+      "map": [
+        "###########",
+        "#####...###",
+        "#.G.O..+###",
+        "#PR...R.DE#",
+        "#......O###",
+        "###########"
+      ],
+      "teach": [
+        "L'essieu s'arrête pile sur l'interrupteur, mais sa seconde bille bloque l'accès à la porte.",
+        "Poussé dans la longueur, il glisse d'une case : une bille reste sur l'interrupteur, le passage se libère."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le rond vers le bas.",
+      "solution": "RRRRUURRDDDLULURDRRR"
+    },
+    {
+      "lot": "L'essieu",
+      "stage": "Twist",
+      "name": "Essieu et interrupteur",
+      "map": [
+        "############",
+        "#...GO.OR.+#",
+        "#PRR..OO...#",
+        "##O#D#######",
+        "####E#######",
+        "############"
+      ],
+      "teach": [
+        "L'essieu se forme en roulant, franchit le trou, et s'arrête contre le mur, pile sur l'interrupteur.",
+        "Un rond seul serait tombé dans le trou avant d'atteindre l'interrupteur.",
+        "Les deux ronds du bas ne mènent pas au même résultat : à toi de trouver lequel lancer, et quand."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite (c'est un autre bloc qui réagit). Ensuite : pousser le rond vers la droite.",
+      "solution": "RRRRRRURRDLLLLDD"
+    },
+    {
+      "lot": "Remix",
+      "stage": "",
+      "name": "Essieu et interrupteur (remix)",
+      "map": [
+        "############",
+        "#...GO.OS.+#",
+        "#PRR..OO...#",
+        "##O#D#######",
+        "####E#######",
+        "############"
+      ],
+      "teach": [
+        "Même plan que « Essieu et interrupteur », mais le rond du haut est devenu un carré : il ne roule plus vers l'interrupteur, il faut trouver un autre chemin."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite (c'est un autre bloc qui réagit). Ensuite : pousser le rond vers la droite.",
+      "solution": "RRRRRRURRRDLLLLLDD"
+    },
+    {
+      "lot": "Finale du monde",
+      "stage": "",
+      "name": "Convoi",
+      "map": [
+        "############",
+        "#PS.OGO..O##",
+        "#...G.O..OE#",
+        "##R....O.O##",
+        "############"
+      ],
+      "teach": [
+        "Finale du monde 3 : le rond doit emporter le rond collant en essieu pour franchir les trous.",
+        "Plusieurs rangées de trous à franchir : le carré peut servir de pont, mais au mauvais endroit il se colle et gêne la suite.",
+        "L'ordre compte : prépare le chemin avant de lancer l'essieu."
+      ],
+      "hint": "D'abord : pousser le carré vers la droite. Ensuite : pousser le rond vers la droite.",
+      "solution": "RRRRDLULLLDRURRRRRDRRR"
+    }
+  ]
+}

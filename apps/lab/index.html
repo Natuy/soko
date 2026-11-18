@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Puzzle à blocs : lab</title>
+<link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+<main>
+  <h1>Puzzle à blocs : niveaux de découverte</h1>
+  <p class="sub">Atteins la sortie. Cinq mondes, chacun construit autour d'un élément. Dans chaque monde, chaque lot explore une mécanique en trois temps : découverte, approfondissement, twist.</p>
+
+  <div class="tabs" role="tablist">
+    <button id="tb-play" class="on" role="tab">Jouer</button>
+    <button id="tb-mech" role="tab">Mécaniques</button>
+    <button id="tb-princ" role="tab">Principes</button>
+    <button id="tb-ideas" role="tab">Idées</button>
+    <button id="tb-edit" role="tab">Éditeur</button>
+  </div>
+
+  <div id="tab-mech" hidden>
+    <p class="sub" style="margin-top:-4px">Les mécaniques utilisées dans le jeu, monde par monde : la règle, ce qu'elle permet de construire, et les niveaux où elle apparaît.</p>
+    <div id="mechs"></div>
+  </div>
+
+  <div id="tab-princ" hidden>
+    <p class="sub" style="margin-top:-4px">Les règles qu'on suit pour créer et valider chaque niveau.</p>
+    <div class="card">
+      <h3>Structure</h3>
+      <ul>
+        <li><b>Mondes.</b> Chaque monde est construit autour d'un élément. Il introduit ses mécaniques, puis se termine par une finale qui les combine. Un élément n'apparaît jamais avant son monde. Le premier monde peut introduire plus de mécaniques, puisqu'il pose les bases.</li>
+        <li><b>Lots.</b> Dans un monde, chaque lot tourne autour d'une seule idée, en trois temps : découverte, approfondissement, twist. Le nombre de niveaux par temps varie selon la richesse de l'idée, pour que le rythme ne soit pas prévisible.</li>
+        <li><b>Mécaniques triviales.</b> Les mécaniques classiques des jeux de puzzle (pousser, combler un trou) n'ont pas besoin des trois temps.</li>
+        <li><b>Remix.</b> Le même plan qu'un niveau déjà joué, avec une seule pièce changée. L'ancienne solution ne doit plus marcher, et la nouvelle doit être vraiment différente.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Les trois temps</h3>
+      <ul>
+        <li><b>Découverte.</b> Un niveau simple, où la seule solution possible fait apparaître la règle. Le joueur la comprend seul, sans tutoriel. Pas d'alternative, pas de piège. C'est le seul type de niveau volontairement simple : il remplace une description textuelle de la règle. Tous les autres niveaux doivent demander de la réflexion.</li>
+        <li><b>Approfondissement.</b> Les niveaux suivants explorent les conséquences de la règle et remettent en cause ce que le joueur croyait avoir compris.</li>
+        <li><b>Twist.</b> La mécanique est détournée, inversée ou combinée avec une idée d'un lot précédent, en restant cohérente avec les règles déjà connues.</li>
+        <li><b>Finale.</b> Elle combine les mécaniques du monde et demande plus de réflexion que les autres niveaux.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Réflexion plutôt que piège</h3>
+      <ul>
+        <li><b>Plusieurs pistes plausibles.</b> En dehors des découvertes, le joueur doit envisager plusieurs possibilités et éliminer les mauvaises pour trouver la solution. Le but n'est pas de le piéger, mais de le faire réfléchir.</li>
+        <li><b>Objectif mesurable.</b> Pour un approfondissement ou un twist : au moins deux moments où le joueur a trois gestes possibles ou plus, dont une partie seulement mène à la solution. Pour une finale : davantage. Marcher ne compte pas : seuls les gestes qui déplacent un bloc sont des choix.</li>
+        <li><b>Des pièces utiles, pas de leurres.</b> Les options viennent des pièces qui servent : plusieurs blocs et plusieurs trous (lequel va où), l'ordre des actions, plusieurs positions possibles pour une butée ou un miroir, plusieurs directions de lancer, plusieurs cases d'où se téléporter. Un bloc qui ne sert pas doit au moins être une alternative crédible au bon bloc (même rôle possible, mauvais choix), jamais une pièce posée là pour piéger.</li>
+        <li><b>Des erreurs liées à la mécanique.</b> Une mauvaise piste doit venir d'une mauvaise lecture de la règle, pas d'un moment d'inattention. Un bloc coincé dans un coin n'est pas une erreur intéressante en soi.</li>
+        <li><b>L'unicité n'est pas une priorité.</b> Plusieurs solutions peuvent exister, tant que chacune demande de comprendre la mécanique.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Cohérence et validation</h3>
+      <ul>
+        <li><b>Règles stables.</b> Une règle ne change jamais selon le contexte. Toute nouvelle situation doit découler des règles déjà connues.</li>
+        <li><b>Mécanique indispensable.</b> Le niveau doit devenir impossible si on retire la mécanique du lot (par exemple, un rond remplacé par un carré, un mur transparent remplacé par un mur). Sinon, le niveau ne montre rien.</li>
+        <li><b>Pas de raccourci.</b> Aucune solution ne doit contourner l'idée du niveau.</li>
+        <li><b>Vérification.</b> Chaque niveau est vérifié par un solveur : résoluble, mécanique indispensable, pièces toutes utiles, nombre de moments de choix.</li>
+        <li><b>Lisibilité.</b> Des niveaux petits, des éléments reconnaissables, une solution qui tient en quelques gestes significatifs.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="tab-ideas" hidden>
+    <div class="card idea">
+      <h3>Demi-carré cassant <span class="tag">En réserve</span></h3>
+      <p>Un demi-carré (poussé seulement par sa face plate) qui se brise aussi sous le choc d'un rond, comme un bloc cassant.</p>
+      <h4>Ce qu'il apporterait</h4>
+      <ul>
+        <li>Un moyen de réparer un piège : un demi-carré qui bouche le passage peut être brisé par un rond.</li>
+        <li>Une butée à usage unique qu'on ne peut placer qu'en la poussant dans un seul sens.</li>
+      </ul>
+      <h4>Réserves</h4>
+      <ul>
+        <li>Il affaiblit le demi-carré normal, dont la force est l'irréversibilité.</li>
+        <li>Un cinquième type de bloc, qui mélange deux codes visuels : risque de règles moins lisibles.</li>
+      </ul>
+      <h4>Règle proposée si on l'ajoute</h4>
+      <p>Il se brise quel que soit le côté frappé par le rond, pointe ou face plate.</p>
+      <h4>Décision</h4>
+      <p>Pas un bloc de base. À garder pour quelques niveaux de fin de jeu, seulement si un puzzle précis en a besoin.</p>
+    </div>
+    <div class="card idea">
+      <h3>Pousser plusieurs blocs d'un coup <span class="tag">En réserve</span></h3>
+      <p>Le joueur pousse toute une file de blocs alignés au lieu d'un seul.</p>
+      <h4>Ce qu'il apporterait</h4>
+      <ul>
+        <li>Déplacer des groupes de blocs.</li>
+        <li>Des puzzles d'ordre : quel bloc mettre en tête de file pour qu'il tombe dans le trou en premier.</li>
+      </ul>
+      <h4>Réserves</h4>
+      <ul>
+        <li>Supprime les blocages entre blocs, une source majeure de puzzles et de pièges.</li>
+        <li>La butée posée par le joueur disparaît : un carré pousserait le bloc au lieu de l'arrêter.</li>
+        <li>Casse des niveaux existants (par exemple « Le choc suffit »).</li>
+        <li>Beaucoup de cas à trancher : rond dans la file (poussé ou roulant, pendule ?), demi-carré mal orienté au milieu, file qui arrive sur un trou.</li>
+      </ul>
+      <h4>Décision</h4>
+      <p>On garde « un seul bloc à la fois » comme règle de base. Piste possible : un élément ponctuel, comme un bloc lourd qui pousse ce qu'il y a devant lui, ou une zone où le joueur pousse les files.</p>
+    </div>
+    <div class="card idea">
+      <h3>Bloc miroir <span class="tag" style="background:#d8ead0;color:#2f6b3a">Dans le jeu</span></h3>
+      <p>Un bloc poussable. Quand le joueur appuie sur un bouton d'action, il est téléporté de l'autre côté du miroir, à la même distance (symétrie par rapport au miroir). D'autres blocs pourraient aussi être téléportés.</p>
+      <h4>Ce qu'il apporterait</h4>
+      <ul>
+        <li>On ne choisit plus seulement où pousser, mais où placer le miroir pour choisir où l'on atterrit.</li>
+        <li>Un déplacement qui franchit murs et trous : de vrais puzzles de planification.</li>
+      </ul>
+      <h4>Règles proposées</h4>
+      <ul>
+        <li>Déclenchement : bouton d'action, en étant simplement aligné avec le miroir (même ligne ou même colonne, sans mur entre les deux). Pas besoin de le regarder.</li>
+        <li>Si plusieurs miroirs sont alignés avec le joueur, rien ne se passe.</li>
+        <li>Case d'arrivée occupée ou interdite (mur, trou, bloc) : la téléportation échoue.</li>
+        <li>Afficher la case d'arrivée en transparence pour éviter de compter les distances à la main.</li>
+      </ul>
+      <h4>Questions ouvertes</h4>
+      <ul>
+        <li>Comment un bloc est-il téléporté : tout ce qui est aligné avec le miroir, ou seulement le bloc visé ?</li>
+        <li>Un bloc téléporté peut-il atterrir dans un trou et le boucher ?</li>
+        <li>Un rond qui roule vers le miroir : renvoyé de l'autre côté en continuant de rouler ?</li>
+      </ul>
+      <h4>Risque</h4>
+      <p>Très puissant : il peut rendre triviaux des niveaux existants. Les niveaux devront être construits autour de lui.</p>
+    </div>
+    <div class="card idea">
+      <h3>Bloc inamovible <span class="tag" style="background:#d8ead0;color:#2f6b3a">Dans le jeu</span></h3>
+      <p>Un bloc qui ne peut être poussé depuis aucune direction.</p>
+      <h4>Ce qu'il apporterait</h4>
+      <ul>
+        <li>Seul, c'est un mur. Avec le miroir, c'est le bloc qu'on ne peut déplacer qu'en le téléportant.</li>
+        <li>Contrairement à un mur, il peut presser un interrupteur ou boucher un trou : « l'amener au bon endroit sans jamais le toucher ».</li>
+      </ul>
+      <h4>Décision</h4>
+      <p>À n'ajouter qu'en même temps que le bloc miroir.</p>
+    </div>
+    <div class="card idea">
+      <h3>Bloc compteur <span class="tag">En réserve</span></h3>
+      <p>Un bloc qui affiche le nombre de poussées qui lui restent. À zéro, il devient inamovible.</p>
+      <h4>Ce qu'il apporterait</h4>
+      <ul>
+        <li>Une contrainte de planification avec une seule règle, facile à afficher.</li>
+        <li>Une notion de ressource : chaque poussée compte.</li>
+        <li>Synergie avec le miroir : un bloc épuisé ne se déplace plus que par téléportation.</li>
+      </ul>
+      <h4>Règle décidée</h4>
+      <p>Le compteur compte le nombre de fois que le joueur le pousse, quelle que soit la distance parcourue. Ce qui le fait bouger sans poussée du joueur (pendule, téléportation, choc) ne compte pas.</p>
+      <h4>Question ouverte</h4>
+      <ul>
+        <li>Existe-t-il en version carrée et en version ronde ?</li>
+      </ul>
+    </div>
+    <div class="card idea">
+      <h3>Bloc collant <span class="tag" style="background:#d8ead0;color:#2f6b3a">Dans le jeu</span></h3>
+      <p>Un bloc qui touche le bloc collant s'y colle. Les deux se déplacent ensuite ensemble.</p>
+      <h4>Ce qu'il apporterait</h4>
+      <ul>
+        <li>Pousser plusieurs blocs devient possible, mais seulement de façon contrôlée, sans changer la règle de base « un seul bloc à la fois ».</li>
+        <li>Une manière d'arrêter un rond net : il colle au lieu de s'arrêter devant.</li>
+      </ul>
+      <h4>Règles décidées</h4>
+      <ul>
+        <li>Un groupe collé se comporte comme un carré : il avance d'une case par poussée.</li>
+        <li>Exception, l'essieu : deux ronds collés, poussés dans la largeur, roulent ensemble. Poussés dans la longueur, ils glissent comme un carré. Dès qu'un carré fait partie du groupe, rien ne roule.</li>
+        <li>Un groupe ne se casse pas au-dessus d'un trou : il passe par-dessus. Si tout le groupe est au-dessus du vide, il tombe en entier et bouche tous les trous sous lui.</li>
+        <li>Un bloc collant qui se colle à quelque chose perd son pouvoir : il n'est plus collant. Les groupes se limitent donc à deux blocs.</li>
+        <li>La téléportation du miroir n'emporte que les blocs du groupe qui sont dans son faisceau : elle peut donc séparer un groupe.</li>
+        <li>Le bloc collant ne se colle pas aux murs, seulement aux blocs.</li>
+        <li>Deux blocs collants qui se touchent se collent entre eux, et perdent tous les deux leur pouvoir.</li>
+        <li>Un bloc collant séparé par le miroir reste « usé » : il ne redevient pas collant.</li>
+        <li>Le bloc collant existe en carré et en rond.</li>
+        <li>Il se colle dès qu'il est en contact avec un autre bloc, y compris si les blocs sont côte à côte au début du niveau.</li>
+        <li>En contact avec plusieurs blocs au même instant, il se colle à tous, puis perd son pouvoir. Les groupes peuvent donc compter plus de deux blocs.</li>
+        <li>Un rond qui roule et passe à côté d'un bloc collant (ou un rond collant qui passe à côté d'un bloc) s'y agrippe en plein trajet. Si l'autre bloc est un carré, le rond s'arrête net, collé sur le côté. Si c'est un rond, il l'emporte avec lui : les deux continuent de rouler en essieu.</li>
+        <li>Si la case devant le rond ramassé est bloquée au moment où l'essieu se forme, l'essieu s'arrête sur place.</li>
+        <li>Un essieu qui frappe deux ronds : les deux partent.</li>
+        <li>Un essieu qui frappe un rond et un carré : le rond part par effet de pendule, et l'essieu s'arrête.</li>
+      </ul>
+<h4>À prévoir</h4>
+      <ul>
+        <li>Un visuel clair pour l'essieu, par exemple une barre qui relie les deux ronds, et un visuel pour le bloc collant « usé ».</li>
+      </ul>
+    </div>
+    <div class="card idea">
+      <h3>Miroir à interrupteur <span class="tag" style="background:#d8ead0;color:#2f6b3a">Dans le jeu</span></h3>
+      <p>Un miroir relié à un interrupteur. Quand un bloc (ou le joueur) presse l'interrupteur, le miroir se déclenche à distance : les blocs de sa ligne et de sa colonne passent de l'autre côté, à la même distance.</p>
+      <h4>Ce qu'il apporterait</h4>
+      <ul>
+        <li>Déplacer des blocs à distance, sans que le joueur soit aligné ni téléporté.</li>
+        <li>Un déclenchement visible dans le niveau, plutôt qu'un bouton qui agit partout : plus lisible.</li>
+        <li>Des combinaisons avec le rond qui s'arrête sur l'interrupteur, ou le pendule qui agit sans bouger.</li>
+      </ul>
+      <h4>Règles retenues pour le prototype</h4>
+      <ul>
+        <li>Il a son propre interrupteur (un losange), distinct de ceux des portes, et ne réagit pas au bouton d'action.</li>
+        <li>Il se déclenche à chaque nouvelle pression, par le joueur ou par un bloc arrêté dessus. Un rond qui passe ne compte pas.</li>
+        <li>Tout ce qui est dans sa ligne et sa colonne, sans mur entre les deux, passe de l'autre côté à la même distance, des deux côtés à la fois. Le joueur aligné part aussi.</li>
+        <li>Si une case d'arrivée est interdite, rien ne part.</li>
+      </ul>
+    </div>
+    <div class="card idea">
+      <h3>Miroir de ligne et miroir de colonne <span class="tag" style="background:#d8ead0;color:#2f6b3a">Dans le jeu</span></h3>
+      <p>Deux variantes du miroir : l'un ne fonctionne que dans sa ligne (horizontalement), l'autre que dans sa colonne (verticalement).</p>
+      <h4>Ce qu'il apporterait</h4>
+      <ul>
+        <li>Lever l'ambiguïté quand plusieurs miroirs sont alignés avec le joueur.</li>
+        <li>Plus de contrôle pour le level design : un miroir qui ne téléporte que dans une direction.</li>
+        <li>Un bon complément au demi-carré, qui ne se pousse aussi que dans une direction.</li>
+      </ul>
+      <h4>Règles retenues pour le prototype</h4>
+      <ul>
+        <li>Une barre horizontale ou verticale sur le miroir indique son sens.</li>
+        <li>Dans l'autre sens, c'est un bloc ordinaire, emporté par le faisceau d'un autre miroir.</li>
+        <li>Si le joueur est aligné avec plusieurs miroirs utilisables, rien ne se passe.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="tab-edit" hidden>
+    <p class="sub" style="margin-top:-4px">Dessine un niveau, teste-le, puis mesure s'il offre de vrais choix. Le solveur, l'évaluation et l'ajustement automatique utilisent le même moteur de règles que le jeu.</p>
+    <div class="card">
+      <h3>Plan</h3>
+      <div class="ed-bar"><select id="ed-load" aria-label="Niveau existant"></select><button class="ed-btn" id="ed-loadbtn">Charger</button></div>
+      <div class="ed-bar">Nouveau : <input type="number" id="ed-w" value="9" min="4" max="20" aria-label="Largeur"> × <input type="number" id="ed-h" value="7" min="4" max="16" aria-label="Hauteur"><button class="ed-btn" id="ed-new">Créer</button>
+        <span style="flex:1"></span><span class="ed-note" id="ed-size"></span>
+        <button class="ed-btn" data-rz="-c" title="Retirer une colonne">− col</button><button class="ed-btn" data-rz="+c" title="Ajouter une colonne">+ col</button>
+        <button class="ed-btn" data-rz="-r" title="Retirer une ligne">− ligne</button><button class="ed-btn" data-rz="+r" title="Ajouter une ligne">+ ligne</button></div>
+      <div class="ed-palette" id="ed-palette"></div>
+      <p class="ed-cur">Outil : <b id="ed-toolname"></b>. Clique ou glisse sur le plan pour peindre.</p>
+      <div class="board-wrap"><div class="board" id="ed-board"></div></div>
+      <div class="ed-errors" id="ed-errors" hidden></div>
+      <div class="ed-bar" style="margin-top:8px"><button class="ed-btn main" id="ed-test">▶ Tester</button><button class="ed-btn" id="ed-solve">Résoudre</button><button class="ed-btn" id="ed-eval">Évaluer</button><button class="ed-btn" id="ed-stop" hidden>Arrêter</button></div>
+      <p class="ed-status" id="ed-status"></p>
+      <details><summary class="ed-note">Plan en texte (modifiable)</summary>
+        <textarea class="ed-text" id="ed-text" rows="8" spellcheck="false"></textarea>
+        <p class="ed-note"># mur · . sol · O trou · E sortie · P joueur · S carré · R rond · X/Q carré/rond sur la sortie · / \ déflecteurs · + interrupteur · D porte · ^ &gt; v &lt; demi-carrés · B cassant · C/G collants · M miroir · = ligne · ! colonne · I inamovible · T vitre · Z miroir à interrupteur · % interrupteur de miroir</p>
+        <button class="ed-btn" id="ed-copy">Copier le plan (JSON)</button>
+      </details>
+    </div>
+    <div class="card" id="ed-results"><h3>Résultats</h3><p class="ed-note">Lance le solveur ou l'évaluation.</p></div>
+    <div class="card">
+      <h3>Ajustement automatique</h3>
+      <p class="ed-note">Essaie des milliers de petites variantes du plan (déplacer un bloc, ajouter un trou, ouvrir un mur…) et garde celle qui offre le plus de vrais choix, sans bloc inutile ni perte de mécanique.</p>
+      <div class="ed-bar">Durée <input type="number" id="ed-osec" value="30" min="5" max="600"> s · Cible <input type="number" id="ed-otarget" value="2" min="1" max="6"> forts · Cases modifiées max <input type="number" id="ed-odiff" value="7" min="1" max="30"></div>
+      <div class="ed-bar"><button class="ed-btn main" id="ed-opt">Lancer l'ajustement</button></div>
+      <div id="ed-optres"></div>
+    </div>
+  </div>
+
+  <div id="tab-play">
+  <div class="testbar" id="testbar" hidden><span>Test du niveau de l'éditeur</span><button id="testback">← Retour à l'éditeur</button></div>
+  <div class="nav">
+    <div class="worlds" id="worlds"></div>
+    <div class="lots" id="lots"></div>
+    <button class="navtog" id="navtog"></button>
+  </div>
+  <div class="head2">
+    <button class="nb" id="prev" aria-label="Niveau précédent">‹</button>
+    <div class="ttl"><div class="stage" id="lvstage"></div><h2 id="lvname"></h2></div>
+    <span class="moves" id="moves"></span>
+    <button class="nb" id="next" aria-label="Niveau suivant">›</button>
+  </div>
+
+  <div class="board-wrap" id="wrap"><div class="board" id="board"></div></div>
+  <p class="tip">Glisse sur le plateau, utilise les flèches ou le clavier.</p>
+
+  <div class="controls">
+    <div class="act left"><button id="undo">↶ Annuler</button></div>
+    <div class="pad">
+      <button class="u" data-d="up" aria-label="Haut">▲</button>
+      <button class="l" data-d="left" aria-label="Gauche">◀</button>
+      <button class="d" data-d="down" aria-label="Bas">▼</button>
+      <button class="r" data-d="right" aria-label="Droite">▶</button>
+    </div>
+    <div class="act right"><button id="act">✦ Action</button><button id="reset">⟲ Rejouer</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Ce que le niveau fait découvrir</h3>
+    <div id="teach"></div>
+    <details id="hintbox"><summary>Indice</summary><p id="hint"></p></details>
+  </div>
+
+
+  </div>
+</main>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

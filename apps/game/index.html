@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Puzzle à blocs</title>
+        <style>
+            * { box-sizing: border-box; margin: 0; }
+            html, body, canvas { width: 100%; height: 100%; }
+            body { overflow: hidden; background: #191816; font: 14px/1.4 system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+            canvas { display: block; touch-action: none; }
+            #hud { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 12px; color: #f0e6d6; pointer-events: none; }
+            #hud b { display: block; font-size: 16px; }
+            #hud small { color: #a89c8c; }
+            #msg { position: fixed; bottom: 16px; left: 0; right: 0; text-align: center; color: #a89c8c; pointer-events: none; }
+            #nogpu { display: none; position: fixed; inset: 0; place-items: center; padding: 24px; text-align: center; color: #f0e6d6; }
+        </style>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <div id="hud"><div><small id="world"></small><b id="name"></b></div><div id="moves"></div></div>
+        <p id="msg">Flèches ou glisser : bouger · Espace ou toucher : action · Z : annuler · R : rejouer · N / P : niveau suivant / précédent</p>
+        <div id="nogpu">Ce navigateur ne supporte pas WebGPU. <br />Essaie Chrome, Edge ou Safari récent, ou utilise le lab.</div>
+        <script type="module" src="./src/main.ts"></script>
+    </body>
+</html>

@@ -1,0 +1,271 @@
+{
+  "world": "Monde 4 · Miroir",
+  "levels": [
+    {
+      "lot": "Le miroir",
+      "stage": "Découverte",
+      "name": "Miroir",
+      "map": [
+        "#########",
+        "#P.M#..E#",
+        "#########"
+      ],
+      "teach": [
+        "Le bouton d'action (✦) téléporte le joueur de l'autre côté du miroir, à la même distance.",
+        "La téléportation traverse les murs. La case d'arrivée est montrée en transparence."
+      ],
+      "hint": "Appuie sur le bouton d'action.",
+      "solution": "*RR"
+    },
+    {
+      "lot": "Le miroir",
+      "stage": "Approfondissement",
+      "name": "Régler la distance",
+      "map": [
+        "##############",
+        "##############",
+        "#PM....#.#E.##",
+        "#.....########",
+        "##############"
+      ],
+      "teach": [
+        "La case d'arrivée dépend de la distance au miroir : si elle tombe sur un mur ou un trou, la téléportation échoue.",
+        "Le miroir se pousse : le déplacer change le point d'arrivée."
+      ],
+      "hint": "D'abord : pousser le miroir vers la droite. Ensuite : te téléporter avec le bouton d'action.",
+      "solution": "RRRRLLL*"
+    },
+    {
+      "lot": "Le miroir",
+      "stage": "Approfondissement",
+      "name": "Bagages",
+      "map": [
+        "###########",
+        "#OSP##..###",
+        "#.S.M#.O.##",
+        "#..S.O...##",
+        "######O####",
+        "######E####",
+        "###########"
+      ],
+      "teach": [
+        "Tout ce qui est entre le joueur et le miroir est téléporté avec lui, chacun à sa propre distance.",
+        "Il y a plusieurs carrés et plusieurs trous : choisis ce que tu emportes, et à quelle distance du miroir tu le places."
+      ],
+      "hint": "D'abord : pousser le carré vers la gauche. Ensuite : pousser le carré vers la droite.",
+      "solution": "LLDDRRRLUULDLDRRRRLLUL*DDD"
+    },
+    {
+      "lot": "Le miroir",
+      "stage": "Approfondissement",
+      "name": "Rond voyageur",
+      "map": [
+        "############",
+        "######..####",
+        "#PR.M#...###",
+        "#...##..R.##",
+        "######\\.OOE#",
+        "############"
+      ],
+      "teach": [
+        "Un rond téléporté atterrit sans rouler. Une fois de l'autre côté, il roule à nouveau quand on le pousse.",
+        "Seul un rond peut passer le déflecteur pour aller combler le trou : un carré resterait bloqué."
+      ],
+      "hint": "D'abord : te téléporter avec le bouton d'action. Ensuite : pousser le rond vers le bas.",
+      "solution": "*ULDRRDLDRRR"
+    },
+    {
+      "lot": "Le miroir",
+      "stage": "Approfondissement",
+      "name": "Inamovible",
+      "map": [
+        "##############",
+        "#.....########",
+        "#P.I.M.#.+.DE#",
+        "##############"
+      ],
+      "teach": [
+        "Le bloc inamovible (rivets) ne se pousse dans aucune direction : seule la téléportation peut le déplacer.",
+        "Il faut régler le miroir pour qu'il atterrisse pile sur l'interrupteur."
+      ],
+      "hint": "Passe par le haut pour pousser le miroir d'une case, puis reviens derrière le bloc.",
+      "solution": "URRRDRULLLD*RR"
+    },
+    {
+      "lot": "Le miroir",
+      "stage": "Twist",
+      "name": "Séparer",
+      "map": [
+        "###########",
+        "###C###..##",
+        "#P.S.M...##",
+        "#######O###",
+        "#######E###",
+        "###########"
+      ],
+      "teach": [
+        "Le faisceau n'emporte que les blocs qui sont dedans : il sépare un groupe collé.",
+        "Le carré détaché peut enfin boucher un trou seul.",
+        "Piège : de l'autre côté, pousser le carré vers le miroir le coince dans le passage."
+      ],
+      "hint": "Téléporte-toi : le carré part avec toi, sans le bloc collé au-dessus. Puis pousse-le dans le trou.",
+      "solution": "R*ULDDD"
+    },
+    {
+      "lot": "Miroirs de ligne et de colonne",
+      "stage": "Découverte",
+      "name": "Ligne ou colonne",
+      "map": [
+        "#########",
+        "#P......#",
+        "#.......#",
+        "##=###!##",
+        "#########",
+        "##E....##",
+        "#########"
+      ],
+      "teach": [
+        "Un miroir de ligne (barre horizontale) ne fonctionne que dans sa ligne. Un miroir de colonne (barre verticale) ne fonctionne que dans sa colonne.",
+        "Dans l'autre sens, le miroir n'est qu'un bloc ordinaire : la case d'arrivée ne s'affiche pas."
+      ],
+      "hint": "Place-toi au-dessus du miroir de colonne, à deux cases.",
+      "solution": "RRRRR*LLLL"
+    },
+    {
+      "lot": "Miroirs de ligne et de colonne",
+      "stage": "Approfondissement",
+      "name": "Miroir en bagage",
+      "map": [
+        "############",
+        "######....##",
+        "######....##",
+        "#P!.=#....##",
+        "############",
+        "######..E###",
+        "############"
+      ],
+      "teach": [
+        "Pour le faisceau d'un miroir de ligne, un miroir de colonne est un bloc comme un autre : il part avec toi.",
+        "De l'autre côté du mur, il sert à nouveau, dans sa colonne."
+      ],
+      "hint": "Téléporte-toi avec le miroir de colonne, puis place-toi deux cases au-dessus de lui.",
+      "solution": "*UUL*RR"
+    },
+    {
+      "lot": "Miroirs de ligne et de colonne",
+      "stage": "Twist",
+      "name": "Croisement",
+      "map": [
+        "##########",
+        "#.....####",
+        "#.....#E##",
+        "#P...=#.##",
+        "#.....####",
+        "#..!..####",
+        "##########"
+      ],
+      "teach": [
+        "Deux miroirs utilisables à la fois s'annulent : quand le joueur est aligné avec les deux, rien ne se passe.",
+        "Il faut écarter celui qui gêne, même s'il ne sert à rien."
+      ],
+      "hint": "Pousse le miroir de colonne d'une case sur le côté, puis reviens au croisement.",
+      "solution": "DDRRUU*U"
+    },
+    {
+      "lot": "Murs transparents",
+      "stage": "Découverte",
+      "name": "Vitre",
+      "map": [
+        "##########",
+        "#P.TM...E#",
+        "##########"
+      ],
+      "teach": [
+        "Un mur transparent arrête le joueur et les blocs, comme un mur.",
+        "Mais le miroir voit à travers : le faisceau le traverse."
+      ],
+      "hint": "Appuie sur le bouton d'action.",
+      "solution": "*R"
+    },
+    {
+      "lot": "Murs transparents",
+      "stage": "Approfondissement",
+      "name": "Prisonnier",
+      "map": [
+        "##############",
+        "#..TITM#+..DE#",
+        "#PS###########",
+        "#..###########",
+        "##############"
+      ],
+      "teach": [
+        "Le bloc inamovible est enfermé entre deux vitres : impossible de l'approcher.",
+        "Mais il est dans le faisceau : le miroir l'emporte à travers les vitres et le pose sur l'interrupteur de la porte.",
+        "Piège : pousser le carré dans la rangée du miroir prend la seule case d'où la téléportation fonctionne."
+      ],
+      "hint": "Monte dans la rangée du miroir sans y pousser le carré, et téléporte-toi depuis la case juste devant la vitre.",
+      "solution": "UR*RR"
+    },
+    {
+      "lot": "Murs transparents",
+      "stage": "Twist",
+      "name": "Trop de reflets",
+      "map": [
+        "############",
+        "#M##########",
+        "#T##########",
+        "#P..M.##..E#",
+        "############"
+      ],
+      "teach": [
+        "La transparence a un revers : un miroir derrière une vitre compte aussi. Aligné avec deux miroirs, le joueur ne peut rien faire.",
+        "Il faut trouver une case alignée avec un seul miroir, quitte à déplacer celui qu'on peut pousser."
+      ],
+      "hint": "Pousse le miroir d'une case vers la droite, puis téléporte-toi depuis une case qui n'est pas sous le miroir enfermé.",
+      "solution": "RRRLL*RR"
+    },
+    {
+      "lot": "Remix",
+      "stage": "",
+      "name": "Croisement (remix)",
+      "map": [
+        "##########",
+        "#.....####",
+        "#.....#E##",
+        "#P..#=#.##",
+        "#.....####",
+        "#..!..####",
+        "##########"
+      ],
+      "teach": [
+        "Même plan que « Croisement », avec un seul mur en plus, qui cache le miroir de ligne depuis la case de croisement.",
+        "Il faut déplacer le miroir de ligne dans une autre rangée, et le miroir de colonne avec lui pour éviter qu'ils s'annulent."
+      ],
+      "hint": "Pousse le miroir de ligne d'une rangée vers le haut, et écarte le miroir de colonne.",
+      "solution": "DDRRURRUDLLUU*"
+    },
+    {
+      "lot": "Finale du monde",
+      "stage": "",
+      "name": "Double reflet",
+      "map": [
+        "##########",
+        "######.DE#",
+        "######+.##",
+        "######O.##",
+        "####.#.M.#",
+        "######...#",
+        "#PI.M#..##",
+        "######..##",
+        "##########"
+      ],
+      "teach": [
+        "Finale du monde 4 : deux téléportations à la suite. La première emporte le bloc inamovible de l'autre côté du mur.",
+        "La seconde, par un autre miroir, le place sur l'interrupteur, pendant que le joueur atterrit devant la porte.",
+        "Le trou sous l'interrupteur empêche d'y pousser un bloc : seul un bloc téléporté peut l'atteindre."
+      ],
+      "hint": "D'abord : te téléporter avec le bouton d'action. Ensuite : pousser le miroir vers la gauche.",
+      "solution": "*URULDDDL*RR"
+    }
+  ]
+}

@@ -1,0 +1,236 @@
+{
+  "world": "Monde 2 · Demi-carré et bloc cassant",
+  "levels": [
+    {
+      "lot": "Le demi-carré",
+      "stage": "Découverte",
+      "name": "Face plate",
+      "map": [
+        "############",
+        "#P.<...>O.E#",
+        "#.####.#####",
+        "#......#####",
+        "############"
+      ],
+      "teach": [
+        "Le demi-carré ne se pousse que par sa face plate : il n'avance que dans le sens de sa pointe.",
+        "Le premier demi-carré pointe vers toi : impossible de le pousser. Il faut trouver par où arriver du bon côté."
+      ],
+      "hint": "Fais le tour par le bas et pousse le second demi-carré dans le trou.",
+      "solution": "DDRRRRRUURRRR"
+    },
+    {
+      "lot": "Le demi-carré",
+      "stage": "Approfondissement",
+      "name": "Le mauvais demi",
+      "map": [
+        "########",
+        "#..P####",
+        "#..##..#",
+        "#.O....#",
+        "#.^^##E#",
+        "#....O.#",
+        "########"
+      ],
+      "teach": [
+        "Pas de marche arrière : un demi-carré mal poussé ne revient jamais.",
+        "Les deux demi-carrés se ressemblent, mais un seul est utile. L'autre, poussé, bouche définitivement le couloir."
+      ],
+      "hint": "Passe par la gauche et pousse vers le haut le demi-carré qui est sous le trou.",
+      "solution": "LDLDDDRUURRRRD"
+    },
+    {
+      "lot": "Le demi-carré",
+      "stage": "Approfondissement",
+      "name": "La rangée imposée",
+      "map": [
+        "##########",
+        "#.....OO.#",
+        "#..S..OO.#",
+        "#P....OOE#",
+        "#.>...OO.#",
+        "#.....OO.#",
+        "##########"
+      ],
+      "teach": [
+        "Le demi-carré impose sa rangée : il ne peut aller que tout droit.",
+        "Le carré, lui, est libre : c'est à lui de rejoindre la rangée du demi-carré.",
+        "Piège : utiliser le carré dans une autre rangée rend le niveau impossible."
+      ],
+      "hint": "Pousse le demi-carré dans la première colonne de trous, puis amène le carré dans la même rangée.",
+      "solution": "DRRRRUUULLDDLDRRRRRRU"
+    },
+    {
+      "lot": "Le demi-carré",
+      "stage": "Approfondissement",
+      "name": "Trois sens",
+      "map": [
+        "########",
+        "#.....##",
+        "#..#.OE#",
+        "#.>.v.O#",
+        "#.P.<..#",
+        "##....##",
+        "########"
+      ],
+      "teach": [
+        "Trois demi-carrés, trois directions : chacun ne peut aller que d'un côté.",
+        "Il faut trouver lequel sert à quoi, et dans quel ordre les pousser pour qu'ils ne se bloquent pas entre eux."
+      ],
+      "hint": "D'abord : pousser le demi-carré vers la gauche. Ensuite : pousser le demi-carré vers la droite.",
+      "solution": "DRRRULDLLULURUURRDDDLLURRRRU"
+    },
+    {
+      "lot": "Le demi-carré",
+      "stage": "Twist",
+      "name": "Butée à sens unique",
+      "map": [
+        "###########",
+        "#.>....####",
+        "#.......OE#",
+        "#.##R######",
+        "#P...######",
+        "###########"
+      ],
+      "teach": [
+        "Le demi-carré peut servir de butée, mais on ne peut le placer qu'en le poussant dans un seul sens.",
+        "Piège : une poussée de trop, et il ne reviendra jamais au-dessus du rond."
+      ],
+      "hint": "Pousse le demi-carré exactement au-dessus du rond, pas plus loin.",
+      "solution": "UUURRDLLDDRRRUDLLLUURRRRRRRR"
+    },
+    {
+      "lot": "Le bloc cassant",
+      "stage": "Découverte",
+      "name": "Une seule fois",
+      "map": [
+        "############",
+        "#P.R...B.OE#",
+        "############"
+      ],
+      "teach": [
+        "Le bloc cassant arrête un rond une fois, puis se brise et laisse un sol normal.",
+        "Au second passage, le rond file jusqu'au trou."
+      ],
+      "hint": "Pousse le rond deux fois.",
+      "solution": "RRRRRRRRR"
+    },
+    {
+      "lot": "Le bloc cassant",
+      "stage": "Approfondissement",
+      "name": "Le verrou",
+      "map": [
+        "##########",
+        "#P.O.O.###",
+        "#.RB##.###",
+        "#.R...B###",
+        "######.###",
+        "######E###",
+        "##########"
+      ],
+      "teach": [
+        "Certains cassants ne peuvent pas être déplacés sans tout bloquer : poussé vers le bas, celui-ci finit sur la sortie, coincé contre le mur.",
+        "La solution : le briser avec un rond lancé depuis un autre côté."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le rond vers le haut.",
+      "solution": "DDRUDRULLURRRRRDDDD"
+    },
+    {
+      "lot": "Le bloc cassant",
+      "stage": "Approfondissement",
+      "name": "Coup de billard",
+      "map": [
+        "#########",
+        "#P.R...\\#",
+        "#.O.B.OB#",
+        "#####.#.#",
+        "#######E#",
+        "#########"
+      ],
+      "teach": [
+        "Un cassant qu'on ne peut ni atteindre ni pousser se brise en lui envoyant un rond par un virage.",
+        "Le rond s'arrête devant le déflecteur, puisque la sortie du virage était bloquée par le cassant."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le bloc cassant vers la droite.",
+      "solution": "RRDRRRRDD"
+    },
+    {
+      "lot": "Le bloc cassant",
+      "stage": "Approfondissement",
+      "name": "Pont ou butée",
+      "map": [
+        "##############",
+        "#P.R..B..OO.E#",
+        "#......#######",
+        "##############"
+      ],
+      "teach": [
+        "Le cassant est sur la route du rond : lancer le rond tout de suite le briserait, et le rond tomberait dans le premier trou.",
+        "Mieux vaut s'en servir comme pont : une fois le premier trou comblé, le rond file jusqu'au second."
+      ],
+      "hint": "D'abord : pousser le bloc cassant vers la droite. Ensuite : pousser le rond vers la droite.",
+      "solution": "DRRRURRRRLLDLLLLURRRRRRRRRR"
+    },
+    {
+      "lot": "Le bloc cassant",
+      "stage": "Twist",
+      "name": "Le choc suffit",
+      "map": [
+        "##########",
+        "#P.....###",
+        "#..>...###",
+        "######v###",
+        "######O###",
+        "##..BR.###",
+        "###E######",
+        "##########"
+      ],
+      "teach": [
+        "Pas besoin d'élan : pousser un rond collé à un cassant suffit à le briser, comme pour le pendule.",
+        "Synthèse : un demi-carré pour faire un pont, un cassant à briser, et un demi-carré piège qui bloque tout s'il est poussé au bout."
+      ],
+      "hint": "Ne pousse pas le demi-carré du haut jusqu'au bout. Descends par le demi-carré qui pointe vers le bas, puis pousse le rond vers la gauche.",
+      "solution": "RRRDRRDDDLLLLD"
+    },
+    {
+      "lot": "Remix",
+      "stage": "",
+      "name": "La rangée imposée (remix)",
+      "map": [
+        "##########",
+        "#.....OO.#",
+        "#..S..OO.#",
+        "#P#...OOE#",
+        "#.>...OO.#",
+        "#.....OO.#",
+        "##########"
+      ],
+      "teach": [
+        "Même plan que « La rangée imposée », avec un seul mur en plus.",
+        "Le carré ne peut plus descendre par le même chemin : il faut l'amener autrement dans la rangée du demi-carré."
+      ],
+      "hint": "Décale le carré d'une colonne vers la droite avant de le faire descendre.",
+      "solution": "URRURDDLDRRDLLLLURRRRRRRU"
+    },
+    {
+      "lot": "Finale du monde",
+      "stage": "",
+      "name": "Atelier",
+      "map": [
+        "##########",
+        "#.>...O..#",
+        "#.......B#",
+        "#.#R####.#",
+        "#P..####E#",
+        "##########"
+      ],
+      "teach": [
+        "Finale du monde 2 : le demi-carré sert deux fois, d'abord de butée pour arrêter le rond, puis de pont.",
+        "Le rond brise ensuite le cassant qui verrouille la sortie. Poussé, ce cassant finirait coincé sur la sortie.",
+        "Piège : chaque erreur est définitive. Demi-carré poussé trop loin ou trou bouché trop tôt, et le rond ne s'arrête plus au bon endroit."
+      ],
+      "hint": "Place le demi-carré juste au-dessus du rond, fais monter le rond, lance-le vers le cassant, puis termine le pont avec le demi-carré.",
+      "solution": "UUURDLDDRRUDLLUURRLURRRRRRDDD"
+    }
+  ]
+}

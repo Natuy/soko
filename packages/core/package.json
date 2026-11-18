@@ -1,0 +1,17 @@
+{
+  "name": "@puzzle/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Règles du jeu, solveur et niveaux. Sans dépendance, utilisable dans le navigateur, un worker ou Node.",
+  "exports": {
+    ".": "./src/index.js",
+    "./engine": "./src/engine.js",
+    "./analysis": "./src/analysis.js",
+    "./replay": "./src/replay.js",
+    "./levels": "./src/levels.js"
+  },
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\""
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "puzzle-blocs",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "bun run --cwd apps/lab dev",
+    "dev:game": "bun run --cwd apps/game dev",
+    "test": "node --test \"packages/core/test/**/*.test.js\"",
+    "levels:solve": "node scripts/solve-levels.mjs",
+    "build:lab": "bun run --cwd apps/lab build",
+    "build:game": "bun run --cwd apps/game build"
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "world": "Monde 5 · Miroir à interrupteur",
+  "levels": [
+    {
+      "lot": "Miroir à interrupteur",
+      "stage": "Découverte",
+      "name": "Reflet à distance",
+      "map": [
+        "############",
+        "#P.S%.Z#..E#",
+        "############"
+      ],
+      "teach": [
+        "Le miroir à interrupteur (cadre turquoise) ne réagit pas au bouton d'action : il se déclenche quand quelque chose se pose sur un interrupteur de miroir (losange).",
+        "Tout ce qui est dans sa ligne et sa colonne passe de l'autre côté, joueur compris."
+      ],
+      "hint": "Pousse le carré sur le losange.",
+      "solution": "RRR"
+    },
+    {
+      "lot": "Miroir à interrupteur",
+      "stage": "Approfondissement",
+      "name": "Seul un bloc arrêté",
+      "map": [
+        "##########",
+        "#........#",
+        "#PR..%.S.#",
+        "##.#######",
+        "##Z#######",
+        "##########",
+        "##.....E##",
+        "##########"
+      ],
+      "teach": [
+        "Comme pour les portes, un rond qui passe sur le losange ne le déclenche pas : il doit s'y arrêter.",
+        "Il faut donc une butée juste après le losange, et être dans la colonne du miroir au moment où le rond s'arrête."
+      ],
+      "hint": "D'abord : pousser le carré vers la gauche. Ensuite : pousser le rond vers la droite, ce qui déclenche le miroir.",
+      "solution": "URRRRRRRDLULLLLLLDRRRRRR"
+    },
+    {
+      "lot": "Miroir à interrupteur",
+      "stage": "Approfondissement",
+      "name": "Devant le miroir",
+      "map": [
+        "############",
+        "#....#######",
+        "#P.%.Z#OO.E#",
+        "#.SS.#######",
+        "#....#######",
+        "############"
+      ],
+      "teach": [
+        "Quand le losange est dans la ligne du miroir, le bloc qui le presse est emporté aussi, à sa propre distance.",
+        "Deux trous à combler de l'autre côté, à deux distances différentes : chaque carré doit partir de la bonne case, et toi aussi."
+      ],
+      "hint": "D'abord : pousser le carré vers le haut. Ensuite : pousser le carré vers le haut, ce qui déclenche le miroir.",
+      "solution": "DDRUDRUURRR"
+    },
+    {
+      "lot": "Miroir à interrupteur",
+      "stage": "Approfondissement",
+      "name": "Échange",
+      "map": [
+        "###########",
+        "#....######",
+        "#P%%.ZTOS##",
+        "#..S.##E###",
+        "#....######",
+        "###########"
+      ],
+      "teach": [
+        "Les deux côtés du miroir à interrupteur bougent en même temps : ce qui arrive peut prendre la place de ce qui part.",
+        "Choisis bien quel losange presser, et avec quoi : la distance décide où chacun arrive."
+      ],
+      "hint": "D'abord : pousser le carré vers le haut, ce qui déclenche le miroir. Ensuite : marcher sur le losange vers le haut, ce qui déclenche le miroir.",
+      "solution": "DDRRUUD"
+    },
+    {
+      "lot": "Miroir à interrupteur",
+      "stage": "Approfondissement",
+      "name": "Aller-retour",
+      "map": [
+        "##########",
+        "###E##O.##",
+        "###.##SS.#",
+        "#P%OTZ..%#",
+        "######...#",
+        "##########"
+      ],
+      "teach": [
+        "Le miroir à interrupteur se déclenche à chaque nouvelle pression, sur n'importe quel losange.",
+        "Une première pression t'envoie de l'autre côté de la vitre, une seconde te ramène, avec ce que tu as placé dans la ligne. Encore faut-il choisir le bon carré, à la bonne distance."
+      ],
+      "hint": "D'abord : marcher sur le losange vers la droite, ce qui déclenche le miroir. Ensuite : pousser le carré vers le haut.",
+      "solution": "RLLUURDRDRUU"
+    },
+    {
+      "lot": "Miroir à interrupteur",
+      "stage": "Approfondissement",
+      "name": "Deux pressions",
+      "map": [
+        "###########",
+        "#....######",
+        "#....###E##",
+        "#PS.%TZ.O##",
+        "#...#######",
+        "###########"
+      ],
+      "teach": [
+        "Le même miroir sert deux fois : d'abord pour le carré, ensuite pour toi.",
+        "Poussé le long de la ligne du miroir, le carré t'entraîne avec lui, et ta case d'arrivée est un mur : il faut le faire arriver sur le losange par un autre côté."
+      ],
+      "hint": "D'abord : pousser le carré vers le haut. Ensuite : pousser le carré vers la droite.",
+      "solution": "DRULURRURDDU"
+    },
+    {
+      "lot": "Miroir à interrupteur",
+      "stage": "Twist",
+      "name": "Commande à distance",
+      "map": [
+        "##########",
+        "#P...#I###",
+        "#....#.###",
+        "#..%.#Z###",
+        "#......###",
+        "#....#+###",
+        "##D#######",
+        "##E#######",
+        "##########"
+      ],
+      "teach": [
+        "Le miroir à interrupteur déplace des blocs sans que le joueur soit dans le faisceau : le bloc inamovible atterrit sur l'interrupteur de la porte.",
+        "Le joueur peut presser lui-même l'interrupteur de miroir. Le déclenchement a lieu au moment où il se pose dessus, et le bloc reste où il a atterri.",
+        "Piège : le miroir est accessible par le bas. Déplacé, il n'enverra plus le bloc sur l'interrupteur."
+      ],
+      "hint": "Marche sur le losange.",
+      "solution": "DDRRDDLDD"
+    },
+    {
+      "lot": "Ce que voit le miroir",
+      "stage": "Découverte",
+      "name": "Volet",
+      "map": [
+        "##########",
+        "##.+.#####",
+        "##.S.#####",
+        "#EO..Z.DS#",
+        "##...#####",
+        "##P%.#####",
+        "##########"
+      ],
+      "teach": [
+        "Une porte fermée bloque le regard du miroir à interrupteur, comme un mur. Ouverte, elle le laisse voir.",
+        "Il faut ouvrir la porte avant de déclencher le miroir, pour qu'il voie le carré caché derrière."
+      ],
+      "hint": "Pousse le carré sur l'interrupteur de la porte, puis marche sur le losange.",
+      "solution": "URUUDDDUULL"
+    },
+    {
+      "lot": "Ce que voit le miroir",
+      "stage": "Twist",
+      "name": "Vitrine",
+      "map": [
+        "#########",
+        "#####S###",
+        "#####T###",
+        "#P.%#Z###",
+        "#.S.O.###",
+        "##..#O###",
+        "#####E###",
+        "#########"
+      ],
+      "teach": [
+        "Un bloc enfermé derrière une vitre est hors d'atteinte pour le joueur, mais pas pour un miroir.",
+        "Le miroir à interrupteur voit le carré à travers la vitre et l'envoie boucher le trou."
+      ],
+      "hint": "D'abord : pousser le carré vers la droite. Ensuite : marcher sur le losange vers le haut, ce qui déclenche le miroir.",
+      "solution": "DRRUDRRDD"
+    },
+    {
+      "lot": "Finale du monde",
+      "stage": "",
+      "name": "Sous verre",
+      "map": [
+        "##########",
+        "#PR....%##",
+        "#.###I####",
+        "#.###T####",
+        "#..Z...###",
+        "#.###.####",
+        "#.###+####",
+        "#D########",
+        "#E########",
+        "##########"
+      ],
+      "teach": [
+        "Finale du monde 5 : le bloc inamovible est sous verre, au-dessus de la ligne du miroir à interrupteur. Une seule pression doit l'envoyer sur l'interrupteur de la porte.",
+        "Il faut d'abord placer le miroir pile dans sa colonne, puis déclencher avec un rond qui s'arrête sur le losange.",
+        "Piège : lancer le rond trop tôt, ou pousser le miroir une case trop loin, et tout est bloqué."
+      ],
+      "hint": "Pousse le miroir de deux cases vers la droite, puis remonte lancer le rond.",
+      "solution": "DDDRRRLLLUUURLDDDDDDD"
+    }
+  ]
+}

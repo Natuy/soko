@@ -1,0 +1,9 @@
+{
+    "extends": "@dylanebert/shallot/tsconfig.json",
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": false,
+        "resolveJsonModule": true
+    },
+    "include": ["src", "vite.config.ts"]
+}

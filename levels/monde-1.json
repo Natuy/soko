@@ -1,0 +1,428 @@
+{
+  "world": "Monde 1 · Carrés, ronds et déflecteurs",
+  "levels": [
+    {
+      "lot": "Bases",
+      "stage": "",
+      "name": "Pousser",
+      "map": [
+        "#######",
+        "##...##",
+        "#P.S.E#",
+        "##...##",
+        "#######"
+      ],
+      "teach": [
+        "Pousser un carré d'une case, et le contourner.",
+        "Un bloc est aussi un obstacle : pousse-le tout droit et il se retrouve sur la sortie, coincé contre le mur. Il faut le pousser sur le côté."
+      ],
+      "hint": "Pousse le carré une seule fois, puis passe par la rangée du haut et pousse-le vers le bas.",
+      "solution": "RURDRR"
+    },
+    {
+      "lot": "Bases",
+      "stage": "",
+      "name": "Premier pont",
+      "map": [
+        "#########",
+        "#.....###",
+        "#P.S..O.E",
+        "#.....###",
+        "#########"
+      ],
+      "teach": [
+        "Un bloc poussé dans un trou le rebouche, et la case devient un sol où l'on peut marcher.",
+        "Piège : un carré poussé contre un mur ne peut plus en être décollé."
+      ],
+      "hint": "Pousse le carré tout droit vers le trou, sans le coller à un mur.",
+      "solution": "RRRRRRR"
+    },
+    {
+      "lot": "Bases",
+      "stage": "",
+      "name": "Deux blocs, une rangée",
+      "map": [
+        "##########",
+        "#.....OO.#",
+        "#.S...OO.#",
+        "#P....OOE#",
+        "#.S...OO.#",
+        "#.....OO.#",
+        "##########"
+      ],
+      "teach": [
+        "Les blocs sont une ressource : deux colonnes de trous, deux carrés, aucun en trop.",
+        "Il faut planifier : les deux carrés doivent finir dans la même rangée, et un carré collé au bord haut ou bas ne peut plus changer de rangée."
+      ],
+      "hint": "Bouche un trou de la première colonne, puis amène le second carré dans la même rangée et pousse-le par-dessus le premier.",
+      "solution": "URRRRDDDLLLUULURRRRRRRD"
+    },
+    {
+      "lot": "Le rond",
+      "stage": "Découverte",
+      "name": "Ça roule",
+      "map": [
+        "###########",
+        "#P.R....OE#",
+        "###########"
+      ],
+      "teach": [
+        "Le rond ne s'arrête pas après une case : il roule jusqu'au premier obstacle ou au premier trou.",
+        "Un seul geste suffit pour traverser tout le couloir."
+      ],
+      "hint": "Pousse le rond.",
+      "solution": "RRRRRRRR"
+    },
+    {
+      "lot": "Le rond",
+      "stage": "Approfondissement",
+      "name": "Le premier trou",
+      "map": [
+        "##############",
+        "####...#######",
+        "####.R.#######",
+        "#P.ROR.R.OOOE#",
+        "##############"
+      ],
+      "teach": [
+        "Un rond tombe dans le premier trou sur sa route : impossible de viser le plus loin.",
+        "Un trou rebouché redevient du sol : le rond suivant passe par-dessus.",
+        "Pousser un rond vers un mur tout proche permet de le faire entrer dans le couloir."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le rond vers le bas.",
+      "solution": "RRRRRUULDLDRRRRRRRR"
+    },
+    {
+      "lot": "Le rond",
+      "stage": "Approfondissement",
+      "name": "Labyrinthe glissant",
+      "map": [
+        "##########",
+        "#####.OOE#",
+        "##...R.###",
+        "#OR....###",
+        "#.R.P#####",
+        "#.O..#####",
+        "##########"
+      ],
+      "teach": [
+        "Un rond ne s'arrête que contre un obstacle : pour l'amener quelque part, il faut enchaîner les rebonds sur les murs.",
+        "Trois ronds, plusieurs trous : chaque rond n'a que quelques trajets possibles, et un rond tombé au mauvais endroit ferme d'autres trajets."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le rond vers le haut.",
+      "solution": "UURDRUDLLLLLDRRDRUULURDRRULURRR"
+    },
+    {
+      "lot": "Le rond",
+      "stage": "Approfondissement",
+      "name": "La butée",
+      "map": [
+        "###########",
+        "#.S...#####",
+        "#.......OE#",
+        "#..R..#####",
+        "#P....#####",
+        "###########"
+      ],
+      "teach": [
+        "Un rond ne s'arrête que contre quelque chose : pour le stopper pile au bon endroit, il faut une butée.",
+        "Un carré contre le mur du haut ne peut plus que glisser à l'horizontale, mais il fait une butée parfaite.",
+        "Piège : pousser le rond vers le haut sans butée le coince contre le mur du haut."
+      ],
+      "hint": "Place le carré juste au-dessus du rond avant de pousser le rond vers le haut. Il s'arrêtera dans la rangée du couloir.",
+      "solution": "UUURDDDRULURRRRRRR"
+    },
+    {
+      "lot": "Le rond",
+      "stage": "Approfondissement",
+      "name": "Butée mobile",
+      "map": [
+        "########",
+        "#P.....#",
+        "#.R.S..#",
+        "###.####",
+        "#......#",
+        "#......#",
+        "#......#",
+        "####O###",
+        "####O###",
+        "####E###",
+        "########"
+      ],
+      "teach": [
+        "Un rond ne s'arrête jamais au milieu d'une salle : pour le faire passer par l'ouverture du mur, il faut l'arrêter pile au-dessus, avec le carré en butée.",
+        "Le même carré doit ensuite passer à son tour de l'autre côté du mur et resservir de butée, pour arrêter le rond au-dessus du trou.",
+        "À la fin, les deux bouchent les trous : le rond d'abord, puis le carré par-dessus."
+      ],
+      "hint": "Pousse le rond vers la droite : le carré l'arrête juste au-dessus de l'ouverture. Fais-le descendre, puis fais passer le carré par la même ouverture pour le placer à droite de la colonne du trou.",
+      "solution": "DRURDURRDLULDDDLDRRURDLLLDRURDURRDLULDDDD"
+    },
+    {
+      "lot": "Le rond",
+      "stage": "Twist",
+      "name": "Viser plus loin",
+      "map": [
+        "############",
+        "#...O.######",
+        "#....S.#####",
+        "#PR..O..O.E#",
+        "############"
+      ],
+      "teach": [
+        "Un bloc peut servir de pont à un autre : un trou comblé laisse passer le bloc suivant vers le trou d'après.",
+        "On ne choisit pas où tombe un rond, mais on peut choisir quels trous restent ouverts sur sa route."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le carré vers la gauche.",
+      "solution": "RRRRRULLLULDLDRRRRRRRRR"
+    },
+    {
+      "lot": "Le pendule",
+      "stage": "Découverte",
+      "name": "Pendule",
+      "map": [
+        "############",
+        "#P.RR...O..#",
+        "#########E##",
+        "############"
+      ],
+      "teach": [
+        "Pousser un rond collé à un autre : c'est l'autre qui part, et le joueur ne bouge pas."
+      ],
+      "hint": "Pousse, et regarde lequel s'en va.",
+      "solution": "RRRRRRRRRD"
+    },
+    {
+      "lot": "Le pendule",
+      "stage": "Approfondissement",
+      "name": "File de trois",
+      "map": [
+        "#############",
+        "#.......#####",
+        "#PRRR.ROOOOE#",
+        "#############"
+      ],
+      "teach": [
+        "Avec une file de ronds, seul le dernier part. Ceux du milieu ne bougent pas.",
+        "Chaque poussée consomme le rond le plus éloigné."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite (c'est un autre bloc qui réagit). Ensuite : pousser le rond vers la droite.",
+      "solution": "RRRRRRRRRRRR"
+    },
+    {
+      "lot": "Le pendule",
+      "stage": "Approfondissement",
+      "name": "Frapper pour placer",
+      "map": [
+        "############",
+        "#......#####",
+        "#PR.ROR.####",
+        "#####O######",
+        "#####E######",
+        "############"
+      ],
+      "teach": [
+        "Le rond qui frappe s'arrête juste devant celui qu'il frappe : un autre rond sert de butée, une seule fois, puisqu'il s'en va."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le rond vers le bas.",
+      "solution": "RRURRDDD"
+    },
+    {
+      "lot": "Le pendule",
+      "stage": "Twist",
+      "name": "Sortie occupée",
+      "map": [
+        "###########",
+        "#........##",
+        "#P.S....O.#",
+        "#########.#",
+        "##OQR.....#",
+        "###########"
+      ],
+      "teach": [
+        "La sortie reste visible sous un bloc : il faut la dégager.",
+        "Le pendule permet de déplacer un rond qu'on ne peut pas atteindre directement.",
+        "Synthèse : un pont pour ouvrir le chemin, puis un pendule pour libérer la sortie.",
+        "Piège : poussé vers la gauche, le carré finit coincé contre le mur."
+      ],
+      "hint": "Bouche le trou avec le carré, fais le tour, et pousse le rond de droite vers la gauche.",
+      "solution": "RRRRRRRRDDLLLLLLL"
+    },
+    {
+      "lot": "Le déflecteur",
+      "stage": "Découverte",
+      "name": "Virage",
+      "map": [
+        "##########",
+        "#P.R...\\##",
+        "#.......##",
+        "#######O##",
+        "#######E##",
+        "##########"
+      ],
+      "teach": [
+        "Le déflecteur fait tourner un rond de 90° : il l'envoie là où le joueur ne peut pas le pousser.",
+        "Le joueur, lui, ne peut pas marcher dessus."
+      ],
+      "hint": "Pousse le rond vers la droite, puis rejoins le trou par la rangée du bas.",
+      "solution": "RRDRRRRDD"
+    },
+    {
+      "lot": "Le déflecteur",
+      "stage": "Approfondissement",
+      "name": "Deux virages",
+      "map": [
+        "##########",
+        "#.....####",
+        "#PR...R.\\#",
+        "####R.##.#",
+        "#E.OOO../#",
+        "##########"
+      ],
+      "teach": [
+        "Deux déflecteurs à la suite font faire demi-tour au rond : il revient vers toi par un autre chemin.",
+        "L'orientation de chaque déflecteur décide de la direction."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le rond vers le bas.",
+      "solution": "RRRDURDDLLLL"
+    },
+    {
+      "lot": "Le déflecteur",
+      "stage": "Approfondissement",
+      "name": "Retour à l'envoyeur",
+      "map": [
+        "###########",
+        "###/.....\\#",
+        "###....R..#",
+        "#EO.OOR...#",
+        "###PRR.../#",
+        "###########"
+      ],
+      "teach": [
+        "Un rond s'arrête aussi contre le joueur, sur la case où il se trouve après son coup : en poussant un rond, tu avances sur la case qu'il vient de quitter.",
+        "Avec le pendule, tu restes sur place : le rond lancé fait le tour par les déflecteurs et revient s'arrêter juste devant toi.",
+        "Plusieurs ronds, plusieurs trous : suis du regard le trajet complet de chaque rond avant de le lancer."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite (c'est un autre bloc qui réagit). Ensuite : pousser le rond vers la droite.",
+      "solution": "RRRRURRULULLLDDLLL"
+    },
+    {
+      "lot": "Le déflecteur",
+      "stage": "Twist",
+      "name": "Pendule en virage",
+      "map": [
+        "##########",
+        "#P.RO.O.\\#",
+        "#..R#.##R#",
+        "#........#",
+        "#ORR###.O#",
+        "##.O###OO#",
+        "########.#",
+        "########E#",
+        "##########"
+      ],
+      "teach": [
+        "Le pendule traverse le virage : le rond qui frappe s'arrête devant le déflecteur, et celui qui est juste après part dans la nouvelle direction.",
+        "Beaucoup de ronds et de trous : il faut choisir quels ronds lancer, dans quel ordre, pour ne pas boucher le passage des suivants."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite. Ensuite : pousser le rond vers le haut.",
+      "solution": "RRLDDRUDDDLUUULURRRRRRRLLDDRRDRDDD"
+    },
+    {
+      "lot": "Interrupteur et porte",
+      "stage": "Découverte",
+      "name": "Interrupteur",
+      "map": [
+        "#########",
+        "#P.S..+.#",
+        "#.......#",
+        "####D####",
+        "####E####",
+        "#########"
+      ],
+      "teach": [
+        "Un interrupteur ouvre la porte tant que quelque chose est posé dessus.",
+        "Le joueur peut le presser, mais alors il ne peut pas passer : il faut y laisser un bloc."
+      ],
+      "hint": "Pousse le carré sur l'interrupteur.",
+      "solution": "RRRRDLDD"
+    },
+    {
+      "lot": "Interrupteur et porte",
+      "stage": "Approfondissement",
+      "name": "Le rond ne s'arrête pas",
+      "map": [
+        "##########",
+        "#P....+.O#",
+        "#.#R#.#S##",
+        "#.......##",
+        "#####D####",
+        "#####E####",
+        "##########"
+      ],
+      "teach": [
+        "Un rond qui ne fait que passer sur l'interrupteur ne le presse pas : il faut qu'il s'y arrête.",
+        "La butée revient : un carré placé juste après l'interrupteur arrête le rond pile dessus."
+      ],
+      "hint": "D'abord : pousser le rond vers le haut. Ensuite : pousser le carré vers le haut.",
+      "solution": "DDRRUDRRRRUDLLLLLLUURRDDRRDD"
+    },
+    {
+      "lot": "Interrupteur et porte",
+      "stage": "Twist",
+      "name": "Sans bouger",
+      "map": [
+        "############",
+        "#PRO....####",
+        "#.RO.##.####",
+        "#+RRO.D.O.E#",
+        "############"
+      ],
+      "teach": [
+        "La porte se ferme dès que le joueur quitte l'interrupteur, donc impossible de lancer un rond en partant de l'interrupteur.",
+        "Le pendule permet d'agir sans bouger : depuis l'interrupteur, on lance le rond le plus loin à travers la porte.",
+        "Les ronds de la file ne servent pas tous au même endroit : l'ordre dans lequel tu les déplaces décide de ce qui reste possible."
+      ],
+      "hint": "D'abord : pousser le rond vers la droite (c'est un autre bloc qui réagit). Ensuite : pousser le rond vers la droite.",
+      "solution": "DDRRLUURDURRDDLLRRRRRRRR"
+    },
+    {
+      "lot": "Remix",
+      "stage": "",
+      "name": "La butée (remix)",
+      "map": [
+        "###########",
+        "#.R...#####",
+        "#.......OE#",
+        "#..R..#####",
+        "#P....#####",
+        "###########"
+      ],
+      "teach": [
+        "Même plan que « La butée », mais le carré du haut est devenu un rond.",
+        "Un rond ne se place pas où on veut : il roule jusqu'au mur. Arrêté contre le mur, il devient pourtant une butée, et le pendule ne peut pas le relancer.",
+        "Il faut donc choisir une autre colonne pour le rond du bas."
+      ],
+      "hint": "Lance le rond du haut contre le mur de droite, puis amène le rond du bas dans la même colonne.",
+      "solution": "UUURDDRDRRULURRRRR"
+    },
+    {
+      "lot": "Finale du monde",
+      "stage": "",
+      "name": "Ricochet",
+      "map": [
+        "##########",
+        "#P.R.O.\\##",
+        "#.S...#.##",
+        "#.....#+##",
+        "###D######",
+        "###E######",
+        "##########"
+      ],
+      "teach": [
+        "Finale : un pont pour le rond, un déflecteur pour l'envoyer dans le puits, et l'interrupteur au fond qui l'arrête contre le mur."
+      ],
+      "hint": "D'abord : pousser le carré vers la droite. Ensuite : pousser le carré vers le haut.",
+      "solution": "DRRRDRULLLURDDDD"
+    }
+  ]
+}
