@@ -1,6 +1,7 @@
 // Lab : jeu en version simple, mécaniques, principes et éditeur de niveaux.
 // Les règles, le solveur et les niveaux viennent de packages/core : rien de tout ça n'est défini ici.
 import { sticky, parseLevel, add, translate, step, teleportPlan, actionDir, teleport, isWin, AN, LEVELS } from '../../../packages/core/src/index.js';
+import { initManage, takenNames } from './manage.js';
 
 // Textes pédagogiques, rangés par nom de niveau (ils sont stockés avec chaque niveau dans /levels).
 const TEXTS = Object.fromEntries(LEVELS.map(l => [l.name, { teach: l.teach, hint: l.hint }]));
@@ -343,15 +344,17 @@ $('wrap').addEventListener('pointerup', e => {
 });
 let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!history.length) build(); }, 200); });
 function showTab(name) {
-  for (const n of ['play', 'mech', 'princ', 'ideas', 'edit']) { $('tab-' + n).hidden = n !== name; $('tb-' + n).classList.toggle('on', n === name); }
+  for (const n of ['play', 'mech', 'princ', 'ideas', 'edit', 'lib']) { $('tab-' + n).hidden = n !== name; $('tb-' + n).classList.toggle('on', n === name); }
   if (name !== 'play') replaying = false;
   if (name === 'edit') { edRender(true); if (!testLevel) edFillLoad(edName && custom.some(l => l.name === edName) ? 'c:' + edName : cur); }
-  try { location.hash = name === 'ideas' ? 'idees' : name === 'mech' ? 'mecaniques' : name === 'princ' ? 'principes' : name === 'edit' ? 'editeur' : testLevel ? 'editeur-test' : 'niveau-' + (cur + 1); } catch (e) {}
+  if (name === 'lib' && manage) manage.render();
+  try { location.hash = name === 'ideas' ? 'idees' : name === 'mech' ? 'mecaniques' : name === 'princ' ? 'principes' : name === 'edit' ? 'editeur' : name === 'lib' ? 'niveaux' : testLevel ? 'editeur-test' : 'niveau-' + (cur + 1); } catch (e) {}
 }
 $('tb-ideas').onclick = () => showTab('ideas');
 $('tb-mech').onclick = () => showTab('mech');
 $('tb-princ').onclick = () => showTab('princ');
 $('tb-edit').onclick = () => showTab('edit');
+$('tb-lib').onclick = () => showTab('lib');
 $('tb-play').onclick = () => { showTab('play'); if (!history.length) build(); };
 // Onglet « Éditeur » : dessiner un niveau, le tester, le résoudre, l'évaluer et l'ajuster automatiquement
 const ED_TOOLS = [
@@ -554,16 +557,30 @@ function edSaveCustom() {
   const name = $('ed-name').value.trim().replace(/\s+/g, ' ');
   if (!name) { edMsg('Donne un nom au niveau avant de l\'enregistrer.'); $('ed-name').focus(); return; }
   // les noms doivent rester uniques : la progression du joueur est enregistrée par nom
-  if (LEVELS.some(l => l.name.toLowerCase() === name.toLowerCase())) { edMsg('« ' + name + ' » est déjà le nom d\'un niveau du jeu : choisis-en un autre.'); return; }
+  if (LEVELS.some(l => l.name.toLowerCase() === name.toLowerCase()) || takenNames().has(name.toLowerCase())) { edMsg('« ' + name + ' » est déjà le nom d\'un niveau d\'un monde : choisis-en un autre.'); return; }
   const i = custom.findIndex(l => l.name.toLowerCase() === name.toLowerCase());
   if (i >= 0 && custom[i].name !== edName && !confirm('Un niveau « ' + custom[i].name + ' » existe déjà. Le remplacer ?')) return;
   const entry = { name, map: edMap.slice(), savedAt: new Date().toISOString() };
+  if (i >= 0 && custom[i].meta) entry.meta = custom[i].meta; // textes gardés quand le niveau a été retiré d'un monde
   if (i >= 0) custom[i] = entry; else custom.push(entry);
   if (!customSave()) { edMsg('Enregistrement impossible : le stockage du navigateur est indisponible.'); return; }
   edName = name; $('ed-name').value = name; edSave();
   edFillLoad('c:' + name);
   const errs = AN.checkMap(edMap);
   edMsg('Niveau « ' + name + ' » enregistré' + (errs.length ? ' (brouillon : le plan contient encore des erreurs).' : '.'));
+}
+
+// Lien avec l'onglet « Niveaux » : on édite le plan d'un niveau rangé dans un monde
+let manage = null; // onglet « Niveaux » (manage.js)
+let edLink = null; // { label, onSave(map) → message d'erreur ou null }
+function edLinkUI() {
+  $('ed-link').hidden = !edLink; $('ed-linkmsg').textContent = '';
+  if (edLink) $('ed-linkname').textContent = edLink.label;
+}
+function editMap(map, label, onSave) {
+  edLink = { label, onSave }; edMap = map.slice(); edName = ''; $('ed-name').value = ''; edMsg('');
+  $('ed-results').innerHTML = '<h3>Résultats</h3><p class="ed-note">Lance le solveur ou l\'évaluation.</p>'; $('ed-optres').innerHTML = '';
+  edLinkUI(); showTab('edit'); edChanged(); $('ed-results').classList.remove('stale');
 }
 
 // Tester dans l'onglet Jouer
@@ -598,6 +615,7 @@ function edInit() {
   edFillLoad(edName && custom.some(l => l.name === edName) ? 'c:' + edName : cur);
   sel.onchange = () => { $('ed-del').hidden = !sel.value.startsWith('c:'); };
   $('ed-loadbtn').onclick = () => {
+    edLink = null; edLinkUI();
     const v = sel.value, c = v.startsWith('c:') ? custom.find(l => l.name === v.slice(2)) : null;
     if (v.startsWith('c:') && !c) return;
     edMap = c ? c.map.slice() : LEVELS[+v].map.slice();
@@ -628,7 +646,7 @@ function edInit() {
     const W = Math.max(4, Math.min(20, +$('ed-w').value || 9)), H = Math.max(4, Math.min(16, +$('ed-h').value || 7));
     edMap = Array.from({ length: H }, (_, r) => Array.from({ length: W }, (_, c) => r === 0 || c === 0 || r === H - 1 || c === W - 1 ? '#' : '.').join(''));
     edMap = setCh(edMap, 1, 1, 'P'); edMap = setCh(edMap, H - 2, W - 2, 'E');
-    edName = ''; $('ed-name').value = ''; edMsg(''); edChanged();
+    edName = ''; $('ed-name').value = ''; edMsg(''); edLink = null; edLinkUI(); edChanged();
   };
   document.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => edResize(b.dataset.rz));
   let down = false;
@@ -648,6 +666,15 @@ function edInit() {
     try { navigator.clipboard.writeText(txt).then(done, () => { $('ed-text').select(); }); } catch (e) { $('ed-text').select(); }
   };
   $('ed-test').onclick = () => edTest();
+  $('ed-linksave').onclick = () => {
+    if (!edLink) return;
+    const errs = AN.checkMap(edMap);
+    if (errs.length) { $('ed-linkmsg').textContent = 'Corrige d\'abord le plan : ' + errs.join(', '); return; }
+    const e = edLink.onSave(edMap.slice());
+    $('ed-linkmsg').textContent = e || 'Plan enregistré dans le brouillon du monde (solution à recalculer s\'il a changé).';
+  };
+  $('ed-linkback').onclick = () => showTab('lib');
+  $('ed-linkoff').onclick = () => { edLink = null; edLinkUI(); };
   $('ed-solve').onclick = edSolve; $('ed-eval').onclick = edEval; $('ed-opt').onclick = edOpt; $('ed-stop').onclick = edStop;
   $('testback').onclick = () => { replaying = false; showTab('edit'); };
   edRender(); edUI();
@@ -655,6 +682,7 @@ function edInit() {
 // FIN ÉDITEUR
 renderMechs();
 edInit();
+manage = initManage({ $, drawStatic, editMap, custom: { get: () => custom.slice(), set: v => { custom = v; customSave(); } } });
 const h = /^#niveau-(\d+)$/.exec(location.hash);
 cur = h ? Math.min(Math.max(+h[1] - 1, 0), LEVELS.length - 1) : 0;
 build();
@@ -662,3 +690,4 @@ if (location.hash === '#idees') showTab('ideas');
 if (location.hash === '#mecaniques') showTab('mech');
 if (location.hash === '#principes') showTab('princ');
 if (location.hash === '#editeur' || location.hash === '#editeur-test') showTab('edit');
+if (location.hash === '#niveaux') showTab('lib');

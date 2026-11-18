@@ -190,3 +190,39 @@
   .ed-prev .board { box-shadow: none; }
   .testbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--ink); color: var(--bg); border-radius: 10px; padding: 6px 6px 6px 12px; font-size: .85rem; margin: 0 0 10px; }
   .testbar button { font: inherit; font-size: .82rem; font-weight: 600; border: none; border-radius: 8px; padding: 5px 10px; background: var(--bg); color: var(--ink); cursor: pointer; }
+
+  /* Onglet « Niveaux » */
+  .ed-link { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; background: var(--bg); font-size: .88rem; }
+  .ed-link span { flex: 1 1 160px; min-width: 0; }
+  .lib-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; }
+  .lib-wname { flex: 1 1 220px; min-width: 0; font: inherit; font-weight: 700; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); }
+  .lib-file { font: .78rem ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+  .lib-badge { font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 6px; background: var(--accent); color: #fff; }
+  .lib-list { list-style: none; margin: 0 0 8px; padding: 0; }
+  .lib-row { border-top: 1px solid var(--line); }
+  .lib-row.on { background: var(--bg); border-radius: 10px; border-top-color: transparent; }
+  .lib-row.on + .lib-row { border-top-color: transparent; }
+  .lib-line { display: flex; align-items: center; gap: 4px; }
+  .lib-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 7px 4px; border: none; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .lib-num { flex: 0 0 22px; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+  .lib-info { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+  .lib-info b { font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-info span { font-size: .75rem; color: var(--muted); }
+  .lib-st { flex: 0 0 auto; font-size: .75rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lib-st.ok, .lib-stl.ok { color: var(--player); } .lib-st.todo { color: var(--muted); } .lib-st.bad, .lib-stl.bad { color: #b3261e; }
+  .lib-mv { flex: 0 0 30px; height: 30px; border: none; border-radius: 8px; background: transparent; color: var(--ink); font-size: .95rem; cursor: pointer; }
+  .lib-mv:hover:not(:disabled) { background: var(--line); } .lib-mv:disabled { opacity: .25; cursor: default; }
+  .lib-detail { padding: 2px 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+  .lib-detail label { display: flex; flex-direction: column; gap: 2px; font-size: .78rem; font-weight: 600; color: var(--muted); }
+  .lib-detail label small { font-weight: 400; }
+  .lib-detail input, .lib-detail select, .lib-detail textarea { font: inherit; font-size: .9rem; font-weight: 400; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--card); color: var(--ink); resize: vertical; }
+  .lib-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lib-prev { display: flex; justify-content: center; }
+  .lib-prev .board, .lib-poolrow .board { box-shadow: none; flex: 0 0 auto; }
+  .lib-detail .ed-note, .lib-detail .ed-status { margin: 0; }
+  .lib-poolrow { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .lib-poolrow:first-child { border-top: none; }
+  .lib-poolrow select { font: inherit; font-size: .85rem; padding: 5px 6px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); max-width: 110px; }
+  .lib-2 > label { min-width: 0; } .lib-2 input, .lib-2 select { width: 100%; }
+  .lib-err:empty { display: none; }
+  @media (max-width: 460px) { .tabs { gap: 2px; padding: 3px; } .tabs button { padding: 7px 2px; font-size: .74rem; flex: 1 1 auto; min-width: 0; } }

@@ -17,6 +17,7 @@
     <button id="tb-princ" role="tab">Principes</button>
     <button id="tb-ideas" role="tab">Idées</button>
     <button id="tb-edit" role="tab">Éditeur</button>
+    <button id="tb-lib" role="tab">Niveaux</button>
   </div>
 
   <div id="tab-mech" hidden>
@@ -225,6 +226,8 @@
     <div class="card">
       <h3>Plan</h3>
       <div class="ed-bar"><select id="ed-load" aria-label="Niveau existant"></select><button class="ed-btn" id="ed-loadbtn">Charger</button><button class="ed-btn" id="ed-del" hidden>Supprimer</button></div>
+      <div class="ed-link" id="ed-link" hidden><span>Plan de <b id="ed-linkname"></b></span><button class="ed-btn main" id="ed-linksave">Enregistrer dans le monde</button><button class="ed-btn" id="ed-linkback">← Niveaux</button><button class="ed-btn" id="ed-linkoff" title="Continuer sans lien avec le niveau">Détacher</button></div>
+      <p class="ed-status" id="ed-linkmsg" style="margin:-4px 0 8px"></p>
       <div class="ed-bar">Mes niveaux : <input type="text" id="ed-name" class="ed-name" placeholder="Nom du niveau" maxlength="60" aria-label="Nom du niveau"><button class="ed-btn" id="ed-save">Enregistrer</button><button class="ed-btn" id="ed-export" title="Copie tous tes niveaux au format de levels/monde-N.json">Exporter (JSON)</button></div>
       <p class="ed-status" id="ed-savemsg" style="margin:-4px 0 8px"></p>
       <div class="ed-bar">Nouveau : <input type="number" id="ed-w" value="9" min="4" max="20" aria-label="Largeur"> × <input type="number" id="ed-h" value="7" min="4" max="16" aria-label="Hauteur"><button class="ed-btn" id="ed-new">Créer</button>
@@ -251,6 +254,16 @@
       <div class="ed-bar"><button class="ed-btn main" id="ed-opt">Lancer l'ajustement</button></div>
       <div id="ed-optres"></div>
     </div>
+  </div>
+
+  <div id="tab-lib" hidden>
+    <p class="sub" style="margin-top:-4px">Range les niveaux dans les mondes, édite leurs textes et leur plan, puis enregistre chaque monde au format de <code>levels/monde-N.json</code>. Tout se fait sur un brouillon gardé dans ce navigateur : le jeu ne change qu'une fois les fichiers écrits.</p>
+    <div class="ed-bar"><button class="ed-btn main" id="lib-writeall" hidden>Écrire les mondes modifiés</button><button class="ed-btn" id="lib-newworld">Nouveau monde</button><button class="ed-btn" id="lib-reset">Revenir aux fichiers du dépôt</button></div>
+    <p class="ed-status" id="lib-msg"></p>
+    <p class="ed-note" id="lib-devnote" hidden>Lab publié : « Télécharger » donne le fichier du monde, à placer dans <code>levels/</code>. Avec <code>bun run dev</code>, un bouton « Écrire » l'enregistre directement.</p>
+    <div class="card"><h3>Mes niveaux à placer</h3><div id="lib-pool"></div></div>
+    <div id="lib-worlds"></div>
+    <p class="ed-note">Après l'écriture d'un monde : <code>bun run levels:solve</code> (solutions manquantes et snapshot), puis <code>bun run test</code>. Les noms doivent rester uniques ; renommer un niveau publié fait perdre la progression des joueurs sur ce niveau.</p>
   </div>
 
   <div id="tab-play">
