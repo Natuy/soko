@@ -1,3 +1,7 @@
+**DESIGN DU JEU ET DES NIVEAUX FAIT PAR UN HUMAIN**
+
+**CODE ET VISUELS TEMPORAIRES FAIT PAR UNE IA**
+
 # Puzzle à blocs
 
 Jeu de puzzle à blocs (carrés, ronds, demi-carrés, cassants, collants, miroirs…) où il faut atteindre la sortie.
