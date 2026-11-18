@@ -5,21 +5,152 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Puzzle à blocs</title>
         <style>
+            :root {
+                --ink: #f0e6d6; --muted: #a89c8c; --bg: #191816; --panel: rgba(36, 33, 29, 0.92);
+                --line: rgba(240, 230, 214, 0.12); --accent: #e8b33a; --green: #2e8a5c; --teal: #3a998f;
+            }
             * { box-sizing: border-box; margin: 0; }
             html, body, canvas { width: 100%; height: 100%; }
-            body { overflow: hidden; background: #191816; font: 14px/1.4 system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+            body { overflow: hidden; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
             canvas { display: block; touch-action: none; }
-            #hud { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 12px; color: #f0e6d6; pointer-events: none; }
+            button { font: inherit; color: inherit; cursor: pointer; }
+            [hidden] { display: none !important; }
+
+            /* ---- HUD ---- */
+            #hud { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; pointer-events: none; transition: opacity 0.3s; }
+            #hud.dim { opacity: 0; }
             #hud b { display: block; font-size: 16px; }
-            #hud small { color: #a89c8c; }
-            #msg { position: fixed; bottom: 16px; left: 0; right: 0; text-align: center; color: #a89c8c; pointer-events: none; }
-            #nogpu { display: none; position: fixed; inset: 0; place-items: center; padding: 24px; text-align: center; color: #f0e6d6; }
+            #hud small { color: var(--muted); }
+            #hud .right { display: flex; align-items: center; gap: 8px; }
+            #moves { color: var(--muted); margin-right: 4px; font-variant-numeric: tabular-nums; }
+            .icon { pointer-events: auto; width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: rgba(36, 33, 29, 0.7); font-size: 18px; line-height: 1; display: grid; place-items: center; transition: background 0.15s, transform 0.1s; }
+            .icon:hover { background: rgba(60, 55, 48, 0.9); }
+            .icon:active { transform: scale(0.92); }
+            #msg { position: fixed; bottom: 16px; left: 0; right: 0; padding: 0 16px; text-align: center; color: var(--muted); pointer-events: none; }
+            #nogpu { display: none; position: fixed; inset: 0; place-items: center; padding: 24px; text-align: center; }
+
+            /* ---- Menus ---- */
+            #ui { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(20, 19, 17, 0.55); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+            #ui.on { opacity: 1; pointer-events: auto; }
+            .menu { width: min(360px, 100%); max-height: 100%; overflow: auto; padding: 24px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45); display: flex; flex-direction: column; gap: 10px; animation: pop 0.28s cubic-bezier(0.2, 1.3, 0.4, 1); }
+            .menu.wide { width: min(760px, 100%); }
+            @keyframes pop { from { transform: translateY(14px) scale(0.96); opacity: 0; } }
+            .menu h1 { font-size: 30px; letter-spacing: -0.5px; text-align: center; }
+            .menu h2 { font-size: 22px; text-align: center; }
+            .menu .sub { color: var(--muted); text-align: center; margin-bottom: 8px; }
+            .menu > button, .row > button { padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); text-align: left; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; transition: background 0.15s, transform 0.1s, border-color 0.15s; }
+            .menu > button:hover, .menu > button:focus-visible, .row > button:hover, .row > button:focus-visible { background: rgba(255, 255, 255, 0.1); border-color: rgba(240, 230, 214, 0.3); outline: none; }
+            .menu > button:active { transform: scale(0.98); }
+            .menu > button.primary { background: var(--green); border-color: transparent; font-weight: 600; }
+            .menu > button.primary:hover, .menu > button.primary:focus-visible { background: #36a06b; }
+            .menu button small { color: var(--muted); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .menu button.primary small { color: rgba(255, 255, 255, 0.75); }
+            .menu .note { color: var(--muted); text-align: center; font-size: 13px; }
+            .hint { padding: 12px 14px; border-radius: 12px; background: rgba(232, 179, 58, 0.12); border: 1px solid rgba(232, 179, 58, 0.3); color: #f3dca6; }
+            .medal { font-size: 44px; text-align: center; line-height: 1; animation: spin 0.8s cubic-bezier(0.2, 1.4, 0.4, 1); }
+            @keyframes spin { from { transform: scale(0) rotate(-120deg); } }
+
+            /* choix du niveau */
+            .menu header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+            #level-list { display: flex; flex-direction: column; gap: 18px; overflow: auto; padding-right: 4px; }
+            #level-list h3 { font-size: 15px; display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; }
+            #level-list h3 small { color: var(--muted); font-weight: 400; flex: 1; }
+            #level-list h3 span { color: var(--muted); font-weight: 400; font-size: 13px; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+            .lv { position: relative; padding: 10px; min-height: 64px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); text-align: left; display: flex; flex-direction: column; gap: 2px; transition: background 0.15s, transform 0.1s; }
+            .lv:hover, .lv:focus-visible { background: rgba(255, 255, 255, 0.1); outline: none; transform: translateY(-1px); }
+            .lv b { font-size: 16px; }
+            .lv span { font-size: 12px; color: var(--muted); line-height: 1.25; }
+            .lv i { position: absolute; top: 8px; right: 10px; font-style: normal; font-size: 12px; color: #8fd4a8; }
+            .lv.solved { border-color: rgba(46, 138, 92, 0.6); background: rgba(46, 138, 92, 0.12); }
+            .lv.current { box-shadow: 0 0 0 2px var(--accent); }
+
+            /* commandes et options */
+            .keys { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; align-items: center; }
+            kbd { display: inline-block; min-width: 26px; padding: 2px 7px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); border-bottom-width: 2px; font: 12px ui-monospace, monospace; text-align: center; }
+            .row { display: flex; gap: 6px; }
+            .row > button { flex: 1; justify-content: center; padding: 10px; }
+            .row > button.on { background: var(--teal); border-color: transparent; }
+            label.opt { color: var(--muted); font-size: 13px; }
         </style>
     </head>
     <body>
         <canvas id="canvas"></canvas>
-        <div id="hud"><div><small id="world"></small><b id="name"></b></div><div id="moves"></div></div>
-        <p id="msg">Flèches ou glisser : bouger · Espace ou toucher : action · Z : annuler · R : rejouer · N / P : niveau suivant / précédent</p>
+        <div id="hud" class="dim">
+            <div><small id="world"></small><b id="name"></b></div>
+            <div class="right">
+                <span id="moves"></span>
+                <button class="icon" id="btn-undo" title="Annuler (Z)" aria-label="Annuler">↶</button>
+                <button class="icon" id="btn-reset" title="Recommencer (R)" aria-label="Recommencer">⟲</button>
+                <button class="icon" id="btn-pause" title="Pause (Échap)" aria-label="Pause">⏸</button>
+            </div>
+        </div>
+        <p id="msg">Flèches ou glisser : bouger · Espace ou toucher : action · Échap : pause</p>
+
+        <div id="ui" class="on">
+            <section class="menu" id="m-title">
+                <h1>Puzzle à blocs</h1>
+                <p class="sub">Pousse, fais rouler, traverse les miroirs : atteins la sortie.</p>
+                <button class="primary" id="continue" data-go="continue">Jouer</button>
+                <button data-go="levels">Choisir un niveau</button>
+                <button data-go="help">Commandes</button>
+                <button data-go="options">Options</button>
+                <p class="note" id="title-count"></p>
+            </section>
+
+            <section class="menu wide" id="m-levels" hidden>
+                <header><h2>Niveaux</h2><button class="icon" data-go="back" aria-label="Retour">✕</button></header>
+                <div id="level-list"></div>
+            </section>
+
+            <section class="menu" id="m-pause" hidden>
+                <h2>Pause</h2>
+                <p class="sub"><span id="pause-level"></span><br /><small id="pause-moves"></small></p>
+                <button class="primary" data-go="resume">Reprendre</button>
+                <button id="hint-btn">Voir un indice</button>
+                <p class="hint" id="hint" hidden></p>
+                <button data-go="restart">Recommencer le niveau</button>
+                <button data-go="levels">Choisir un niveau</button>
+                <button data-go="options">Options</button>
+                <button data-go="title">Menu principal</button>
+            </section>
+
+            <section class="menu" id="m-win" hidden>
+                <div class="medal">★</div>
+                <h2>Sortie atteinte !</h2>
+                <p class="sub"><span id="win-level"></span><br /><span id="win-moves"></span></p>
+                <button class="primary" id="win-next" data-go="next">Niveau suivant</button>
+                <p class="hint" id="win-end" hidden>C'était le dernier niveau. Bravo !</p>
+                <button data-go="restart">Rejouer</button>
+                <button data-go="levels">Choisir un niveau</button>
+                <button data-go="title">Menu principal</button>
+            </section>
+
+            <section class="menu" id="m-help" hidden>
+                <h2>Commandes</h2>
+                <div class="keys">
+                    <span><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd></span><span>Bouger (ou W A S D, ou glisser)</span>
+                    <span><kbd>Espace</kbd></span><span>Action : traverser le miroir aligné (ou toucher l'écran)</span>
+                    <span><kbd>Z</kbd></span><span>Annuler le dernier coup</span>
+                    <span><kbd>R</kbd></span><span>Recommencer le niveau</span>
+                    <span><kbd>N</kbd> <kbd>P</kbd></span><span>Niveau suivant / précédent</span>
+                    <span><kbd>Échap</kbd></span><span>Pause, ou retour dans les menus</span>
+                </div>
+                <button data-go="back">Retour</button>
+            </section>
+
+            <section class="menu" id="m-options" hidden>
+                <h2>Options</h2>
+                <label class="opt">Animations</label>
+                <div class="row">
+                    <button data-speed="normale">Normales</button>
+                    <button data-speed="rapide">Rapides</button>
+                    <button data-speed="aucune">Aucune</button>
+                </div>
+                <button data-go="back">Retour</button>
+            </section>
+        </div>
+
         <div id="nogpu">Ce navigateur ne supporte pas WebGPU. <br />Essaie Chrome, Edge ou Safari récent, ou utilise le lab.</div>
         <script type="module" src="./src/main.ts"></script>
     </body>
