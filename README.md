@@ -13,7 +13,7 @@ Le dépôt contient trois parties qui partagent les mêmes règles et les mêmes
 | `packages/core` | Les règles du jeu (`engine.js`), le solveur et l'évaluation des niveaux (`analysis.js`), la lecture des solutions (`replay.js`). Aucune dépendance, aucun DOM. |
 | `levels/` | Les niveaux : un fichier JSON par monde. |
 | `apps/lab` | La version légère, en 2D : jouer, consulter les mécaniques et les principes, éditer et vérifier les niveaux. |
-| `apps/game` | Le jeu avec [Shallot](https://github.com/dylanebert/shallot) (WebGPU). Pour l'instant, une scène brute qui affiche l'état du jeu. |
+| `apps/game` | Le jeu avec [Shallot](https://github.com/dylanebert/shallot) (WebGPU) : scène 3D animée à partir des événements du moteur (`src/anim.ts`), menus (titre, niveaux, pause, victoire, commandes, options) dans `src/menus.ts`. |
 
 Règle d'or : **les règles ne sont écrites qu'une fois, dans `packages/core`**. Le lab et le jeu ne font qu'afficher l'état et transformer les entrées en coups.
 
