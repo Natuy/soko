@@ -13,6 +13,7 @@ import {
     type MeshHandle,
     MeshInstance,
     MeshMaterial,
+    MeshPlugin,
     type Plugin,
     sphere,
     StandardMaterial,
@@ -149,6 +150,8 @@ const viewSize = (s: State) => Math.max(s.w * 0.75, s.h) + 2;
 
 export const PuzzlePlugin: Plugin = {
     name: "Puzzle",
+    // MeshPlugin doit être initialisé avant nous : on crée la boule avec Meshes.add
+    dependencies: [MeshPlugin],
     initialize(world) {
         const mats = Object.fromEntries(
             Object.entries(COLORS).map(([name, baseColor]) => [
