@@ -332,7 +332,8 @@ export const PuzzlePlugin: Plugin = {
         game.camera = world.create();
         world.add(game.camera, StandardRenderer);
 
-        const eye: V3 = [0, 30, 18];
+        // vue plongeante (~70°) : les murs du bas masquent peu les cases derrière eux
+        const eye: V3 = [0, 30, 11];
         world.add(game.camera, Camera, { clearColor: 0x191816, mode: CameraMode.Orthographic, near: -1000, far: 1000, size: 10 });
         world.add(game.camera, Transform, { translation: eye, rotation: lookAtRotation(...eye, 0, 0, 0) });
         const h = /^#niveau-(\d+)$/.exec(location.hash);
