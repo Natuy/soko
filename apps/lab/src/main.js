@@ -345,7 +345,7 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
 function showTab(name) {
   for (const n of ['play', 'mech', 'princ', 'ideas', 'edit']) { $('tab-' + n).hidden = n !== name; $('tb-' + n).classList.toggle('on', n === name); }
   if (name !== 'play') replaying = false;
-  if (name === 'edit') { edRender(true); if (!testLevel) $('ed-load').value = cur; }
+  if (name === 'edit') { edRender(true); if (!testLevel) edFillLoad(edName && custom.some(l => l.name === edName) ? 'c:' + edName : cur); }
   try { location.hash = name === 'ideas' ? 'idees' : name === 'mech' ? 'mecaniques' : name === 'princ' ? 'principes' : name === 'edit' ? 'editeur' : testLevel ? 'editeur-test' : 'niveau-' + (cur + 1); } catch (e) {}
 }
 $('tb-ideas').onclick = () => showTab('ideas');
@@ -363,7 +363,13 @@ const ED_TOOLS = [
   ['Monde 5', [['Z', 'Miroir à interrupteur'], ['%', 'Interrupteur de miroir']]],
 ];
 let edMap = null, edTool = '#', edMarks = [], edWorker = null, edBusy = null, edLast = null, testLevel = null, replaying = false;
-try { const s = JSON.parse(localStorage.getItem('pz-editor') || 'null'); if (s && Array.isArray(s.map)) edMap = s.map; } catch (e) {}
+let edName = ''; // nom du niveau personnalisé en cours d'édition
+try { const s = JSON.parse(localStorage.getItem('pz-editor') || 'null'); if (s && Array.isArray(s.map)) edMap = s.map; if (s && typeof s.name === 'string') edName = s.name; } catch (e) {}
+// Niveaux personnalisés : enregistrés dans le navigateur, par nom
+const CUSTOM_KEY = 'pz-custom-levels';
+let custom = [];
+try { const c = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]'); if (Array.isArray(c)) custom = c.filter(l => l && typeof l.name === 'string' && Array.isArray(l.map) && l.map.length); } catch (e) {}
+function customSave() { try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); return true; } catch (e) { return false; } }
 if (!edMap || !edMap.length) edMap = ['#########', '#.......#', '#P.S..OE#', '#.......#', '#########'];
 
 // Dessin statique d'un plan (mêmes visuels que le jeu)
@@ -399,7 +405,7 @@ function drawStatic(el, map, T, marks) {
 }
 
 const edT = () => { const W = edMap[0].length, H = edMap.length; return Math.floor(Math.min((Math.min(window.innerWidth - 28, 612)) / W, (Math.max(260, window.innerHeight * 0.55)) / H, 46)); };
-function edSave() { try { localStorage.setItem('pz-editor', JSON.stringify({ map: edMap })); } catch (e) {} }
+function edSave() { try { localStorage.setItem('pz-editor', JSON.stringify({ map: edMap, name: edName })); } catch (e) {} }
 function edRender(keepResults) {
   drawStatic($('ed-board'), edMap, edT(), edMarks);
   $('ed-text').value = edMap.join('\n');
@@ -530,9 +536,39 @@ async function edOpt() {
   $('ed-optres').insertAdjacentHTML('beforeend', '<p class="ed-note">Contraintes respectées : chaque bloc reste utile, les mécaniques indispensables au départ le restent' + (r.essentials.length ? ' (' + r.essentials.join(', ') + ')' : '') + ', et la solution utilise toujours les mêmes effets (pendule, téléportation…). Relis quand même la variante : l\'outil ne juge pas la lisibilité.</p>');
 }
 
+// Niveaux personnalisés : liste, enregistrement, messages
+function edMsg(t) { $('ed-savemsg').textContent = t; }
+function edFillLoad(selected) {
+  const sel = $('ed-load'); sel.innerHTML = '';
+  if (custom.length) {
+    const og = document.createElement('optgroup'); og.label = 'Mes niveaux';
+    [...custom].sort((a, b) => a.name.localeCompare(b.name, 'fr')).forEach(l => { const o = document.createElement('option'); o.value = 'c:' + l.name; o.textContent = l.name; og.appendChild(o); });
+    sel.appendChild(og);
+  }
+  WORLDS.forEach(w => { const og = document.createElement('optgroup'); og.label = w; LEVELS.forEach((l, i) => { if (l.world === w) { const o = document.createElement('option'); o.value = i; o.textContent = (i + 1) + '. ' + l.name; og.appendChild(o); } }); sel.appendChild(og); });
+  sel.value = String(selected);
+  if (sel.selectedIndex < 0) sel.value = String(cur);
+  $('ed-del').hidden = !sel.value.startsWith('c:');
+}
+function edSaveCustom() {
+  const name = $('ed-name').value.trim().replace(/\s+/g, ' ');
+  if (!name) { edMsg('Donne un nom au niveau avant de l\'enregistrer.'); $('ed-name').focus(); return; }
+  // les noms doivent rester uniques : la progression du joueur est enregistrée par nom
+  if (LEVELS.some(l => l.name.toLowerCase() === name.toLowerCase())) { edMsg('« ' + name + ' » est déjà le nom d\'un niveau du jeu : choisis-en un autre.'); return; }
+  const i = custom.findIndex(l => l.name.toLowerCase() === name.toLowerCase());
+  if (i >= 0 && custom[i].name !== edName && !confirm('Un niveau « ' + custom[i].name + ' » existe déjà. Le remplacer ?')) return;
+  const entry = { name, map: edMap.slice(), savedAt: new Date().toISOString() };
+  if (i >= 0) custom[i] = entry; else custom.push(entry);
+  if (!customSave()) { edMsg('Enregistrement impossible : le stockage du navigateur est indisponible.'); return; }
+  edName = name; $('ed-name').value = name; edSave();
+  edFillLoad('c:' + name);
+  const errs = AN.checkMap(edMap);
+  edMsg('Niveau « ' + name + ' » enregistré' + (errs.length ? ' (brouillon : le plan contient encore des erreurs).' : '.'));
+}
+
 // Tester dans l'onglet Jouer
 function edTest(map) {
-  replaying = false; testLevel = { world: 'Éditeur', lot: 'Niveau de l\'éditeur', stage: '', name: 'Niveau de l\'éditeur', map: (map || edMap).slice() };
+  replaying = false; testLevel = { world: 'Éditeur', lot: 'Niveau de l\'éditeur', stage: '', name: (!map && edName) || 'Niveau de l\'éditeur', map: (map || edMap).slice() };
   showTab('play'); build();
 }
 async function edReplay(map, sol) {
@@ -558,14 +594,41 @@ function edInit() {
     }
   }
   $('ed-toolname').textContent = ED_TOOLS.flatMap(g => g[1]).find(t => t[0] === edTool)[1];
-  const sel = $('ed-load'); sel.innerHTML = '';
-  WORLDS.forEach(w => { const og = document.createElement('optgroup'); og.label = w; LEVELS.forEach((l, i) => { if (l.world === w) { const o = document.createElement('option'); o.value = i; o.textContent = (i + 1) + '. ' + l.name; og.appendChild(o); } }); sel.appendChild(og); });
-  sel.value = cur;
-  $('ed-loadbtn').onclick = () => { edMap = LEVELS[+sel.value].map.slice(); $('ed-results').innerHTML = '<h3>Résultats</h3><p class="ed-note">Lance le solveur ou l\'évaluation.</p>'; $('ed-optres').innerHTML = ''; edChanged(); $('ed-results').classList.remove('stale'); };
+  const sel = $('ed-load');
+  edFillLoad(edName && custom.some(l => l.name === edName) ? 'c:' + edName : cur);
+  sel.onchange = () => { $('ed-del').hidden = !sel.value.startsWith('c:'); };
+  $('ed-loadbtn').onclick = () => {
+    const v = sel.value, c = v.startsWith('c:') ? custom.find(l => l.name === v.slice(2)) : null;
+    if (v.startsWith('c:') && !c) return;
+    edMap = c ? c.map.slice() : LEVELS[+v].map.slice();
+    // un niveau officiel chargé devient un brouillon : on ne réutilise pas son nom (il est déjà pris)
+    edName = c ? c.name : ''; $('ed-name').value = edName;
+    $('ed-results').innerHTML = '<h3>Résultats</h3><p class="ed-note">Lance le solveur ou l\'évaluation.</p>'; $('ed-optres').innerHTML = ''; edChanged(); $('ed-results').classList.remove('stale');
+    edMsg(c ? 'Niveau « ' + c.name + ' » chargé.' : '');
+  };
+  $('ed-del').onclick = () => {
+    const v = sel.value; if (!v.startsWith('c:')) return; const name = v.slice(2);
+    if (!confirm('Supprimer le niveau « ' + name + ' » ? Cette action est définitive.')) return;
+    custom = custom.filter(l => l.name !== name); customSave();
+    if (edName === name) { edName = ''; $('ed-name').value = ''; edSave(); }
+    edFillLoad(cur); edMsg('Niveau « ' + name + ' » supprimé.');
+  };
+  $('ed-name').value = edName;
+  $('ed-save').onclick = edSaveCustom;
+  $('ed-name').addEventListener('keydown', e => { if (e.key === 'Enter') edSaveCustom(); });
+  $('ed-export').onclick = () => {
+    if (!custom.length) { edMsg('Aucun niveau enregistré à exporter.'); return; }
+    // même forme que les entrées de levels/monde-N.json (à compléter avec teach / hint, puis bun run levels:solve)
+    const txt = JSON.stringify(custom.map(l => ({ lot: 'Mes niveaux', stage: '', name: l.name, map: l.map })), null, 2);
+    const done = () => edMsg(custom.length + ' niveau' + (custom.length > 1 ? 'x' : '') + ' copié' + (custom.length > 1 ? 's' : '') + ' dans le presse-papiers.');
+    const fallback = () => { $('ed-text').value = txt; $('ed-text').closest('details').open = true; $('ed-text').select(); edMsg('Copie impossible : le JSON est dans la zone de texte ci-dessous.'); };
+    try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (e) { fallback(); }
+  };
   $('ed-new').onclick = () => {
     const W = Math.max(4, Math.min(20, +$('ed-w').value || 9)), H = Math.max(4, Math.min(16, +$('ed-h').value || 7));
     edMap = Array.from({ length: H }, (_, r) => Array.from({ length: W }, (_, c) => r === 0 || c === 0 || r === H - 1 || c === W - 1 ? '#' : '.').join(''));
-    edMap = setCh(edMap, 1, 1, 'P'); edMap = setCh(edMap, H - 2, W - 2, 'E'); edChanged();
+    edMap = setCh(edMap, 1, 1, 'P'); edMap = setCh(edMap, H - 2, W - 2, 'E');
+    edName = ''; $('ed-name').value = ''; edMsg(''); edChanged();
   };
   document.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => edResize(b.dataset.rz));
   let down = false;

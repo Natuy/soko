@@ -158,6 +158,7 @@
   .ed-bar select, .ed-bar input { font: inherit; font-size: .85rem; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); }
   .ed-bar select { flex: 1 1 180px; min-width: 0; }
   .ed-bar input[type=number] { width: 58px; }
+  .ed-bar .ed-name { flex: 1 1 160px; min-width: 0; }
   .ed-btn { font: inherit; font-size: .84rem; font-weight: 600; padding: 7px 11px; border: none; border-radius: 10px; background: var(--card); color: var(--ink); box-shadow: 0 1px 0 var(--line), 0 0 0 1.5px var(--line) inset; cursor: pointer; }
   .ed-btn.main { background: var(--ink); color: var(--bg); box-shadow: none; }
   .ed-btn:disabled { opacity: .45; cursor: default; }

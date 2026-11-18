@@ -224,7 +224,9 @@
     <p class="sub" style="margin-top:-4px">Dessine un niveau, teste-le, puis mesure s'il offre de vrais choix. Le solveur, l'évaluation et l'ajustement automatique utilisent le même moteur de règles que le jeu.</p>
     <div class="card">
       <h3>Plan</h3>
-      <div class="ed-bar"><select id="ed-load" aria-label="Niveau existant"></select><button class="ed-btn" id="ed-loadbtn">Charger</button></div>
+      <div class="ed-bar"><select id="ed-load" aria-label="Niveau existant"></select><button class="ed-btn" id="ed-loadbtn">Charger</button><button class="ed-btn" id="ed-del" hidden>Supprimer</button></div>
+      <div class="ed-bar">Mes niveaux : <input type="text" id="ed-name" class="ed-name" placeholder="Nom du niveau" maxlength="60" aria-label="Nom du niveau"><button class="ed-btn" id="ed-save">Enregistrer</button><button class="ed-btn" id="ed-export" title="Copie tous tes niveaux au format de levels/monde-N.json">Exporter (JSON)</button></div>
+      <p class="ed-status" id="ed-savemsg" style="margin:-4px 0 8px"></p>
       <div class="ed-bar">Nouveau : <input type="number" id="ed-w" value="9" min="4" max="20" aria-label="Largeur"> × <input type="number" id="ed-h" value="7" min="4" max="16" aria-label="Hauteur"><button class="ed-btn" id="ed-new">Créer</button>
         <span style="flex:1"></span><span class="ed-note" id="ed-size"></span>
         <button class="ed-btn" data-rz="-c" title="Retirer une colonne">− col</button><button class="ed-btn" data-rz="+c" title="Ajouter une colonne">+ col</button>
