@@ -12,6 +12,14 @@ export const EASE = {
     inOut: (p: number) => (p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2),
     // léger dépassement puis retour : pour les apparitions
     back: (p: number) => 1 + 2.70158 * (p - 1) ** 3 + 1.70158 * (p - 1) ** 2,
+    // chute qui rebondit sur le sol
+    bounce: (p: number) => {
+        const n = 7.5625, d = 2.75;
+        if (p < 1 / d) return n * p * p;
+        if (p < 2 / d) return n * (p -= 1.5 / d) * p + 0.75;
+        if (p < 2.5 / d) return n * (p -= 2.25 / d) * p + 0.9375;
+        return n * (p -= 2.625 / d) * p + 0.984375;
+    },
 };
 
 // Une interpolation d'une propriété d'une entité entre t0 et t1 (en secondes).
@@ -20,12 +28,13 @@ export interface Tween {
     eid: number;
     t0: number;
     t1: number;
-    prop: "translation" | "scale";
+    prop: "translation" | "scale" | "custom";
     from: V3;
     to: V3;
     ease: Ease;
     arc?: number;
     osc?: { amp: V3; n: number; decay: boolean };
+    set?: (v: number) => void; // piste "custom" : reçoit la valeur interpolée de from[0] à to[0]
 }
 
 export class Timeline {
@@ -41,6 +50,10 @@ export class Timeline {
         this.end = Math.max(this.end, tw.t1);
         this.sorted = false;
     }
+    // Piste libre (zoom de caméra…) : set reçoit une valeur de a à b
+    track(t0: number, t1: number, a: number, b: number, ease: Ease, set: (v: number) => void): void {
+        this.add({ eid: -1, t0, t1, prop: "custom", from: [a, 0, 0], to: [b, 0, 0], ease, set });
+    }
     cue(t: number, run: () => void): void {
         this.cues.push({ t, run });
         this.end = Math.max(this.end, t);
@@ -52,7 +65,7 @@ export class Timeline {
 
     // Applique les valeurs à l'instant courant. Les interpolations sont rejouées par ordre
     // de départ : pour une même entité, la plus récente l'emporte.
-    sample(apply: (eid: number, prop: Tween["prop"], v: V3) => void): void {
+    sample(apply: (eid: number, prop: "translation" | "scale", v: V3) => void): void {
         if (!this.sorted) {
             this.tweens.sort((a, b) => a.t0 - b.t0);
             this.cues.sort((a, b) => a.t - b.t);
@@ -63,13 +76,14 @@ export class Timeline {
             if (tw.t0 > t) break;
             const p = tw.t1 > tw.t0 ? Math.min(1, (t - tw.t0) / (tw.t1 - tw.t0)) : 1;
             const e = tw.ease(p);
+            if (tw.set) { tw.set(tw.from[0] + (tw.to[0] - tw.from[0]) * e); continue; }
             const v: V3 = [0, 1, 2].map((i) => tw.from[i] + (tw.to[i] - tw.from[i]) * e) as V3;
             if (tw.arc) v[1] += tw.arc * Math.sin(Math.PI * p);
             if (tw.osc) {
                 const k = Math.sin(p * Math.PI * tw.osc.n) * (tw.osc.decay ? 1 - p : 1);
                 for (let i = 0; i < 3; i++) v[i] += tw.osc.amp[i] * k;
             }
-            apply(tw.eid, tw.prop, v);
+            apply(tw.eid, tw.prop as "translation" | "scale", v);
         }
         while (this.nextCue < this.cues.length && this.cues[this.nextCue].t <= t) this.cues[this.nextCue++].run();
     }

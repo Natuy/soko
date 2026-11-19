@@ -60,6 +60,7 @@ const COLORS = {
     halfTop: [0.62, 0.5, 0.8, 1],
     sticky: [0.55, 0.78, 0.25, 1],
     stickyDrop: [0.4, 0.62, 0.14, 1],
+    glue: [0.52, 0.8, 0.2, 1],
     mirror: [0.36, 0.43, 0.5, 1],
     mirrorFace: [0.85, 0.92, 0.98, 1],
     mirrorBar: [0.3, 0.36, 0.42, 1],
@@ -80,6 +81,7 @@ const MAT_OPTS: Partial<Record<ColorName, { emissive?: V3; metallic?: number; pe
     rivet: { metallic: 0.8, perceptualRoughness: 0.3 },
     sticky: { perceptualRoughness: 0.25 },
     stickyDrop: { perceptualRoughness: 0.15 },
+    glue: { perceptualRoughness: 0.1, emissive: [0.04, 0.08, 0.0] },
 };
 
 // ---- Ambiance par monde : couleurs du décor, fond et lumière ----
@@ -104,6 +106,8 @@ const DOOR = { open: { y: 0.03, s: [0.9, 0.06, 0.9] as V3 }, closed: { y: 0.45, 
 // Petite pièce qui suit un bloc (rayure, fissure, rivet…) : Shallot n'a pas de hiérarchie,
 // on recopie donc la position et l'échelle du parent à chaque image.
 interface Part { eid: number; parent: number; off: V3; s: V3; base: number }
+// Pont de colle entre deux blocs collés : suit ses deux blocs, apparaît en gonflant
+interface Bridge { eid: number; a: number; b: number; axis: "x" | "z"; age: number; baseA: number; baseB: number }
 // Étincelle : sort de la sortie en continu, ou jaillit quand le joueur l'atteint
 interface Spark { eid: number; p: V3; v: V3; age: number; life: number; size: number; loop: boolean }
 
@@ -133,6 +137,8 @@ const game = {
     eye: -1,
     anim: null as Timeline | null,
     won: false,
+    kindOf: new Map<number, string>(), // genre de bloc affiché par chaque entité (un collant qui colle change de genre)
+    glue: new Map<string, Bridge>(), // "entitéA|entitéB" → pont
 };
 
 const cellOf = (key: string, y: number): V3 => {
@@ -149,6 +155,7 @@ function startLevel(i: number): void {
     game.won = false;
     progress.setLast(game.index);
     ui.resetHint();
+    ui.card(game.index);
     try { history.replaceState(null, "", `#niveau-${game.index + 1}`); } catch {}
     if (game.world) {
         game.world.storage(Camera).size.set(game.camera, viewSize(game.state));
@@ -299,6 +306,58 @@ function putBlock(k: string, kind: string): number {
     return eid;
 }
 
+function placeBlock(k: string, kind: string): number {
+    const eid = putBlock(k, kind);
+    game.kindOf.set(eid, kind);
+    return eid;
+}
+
+// Remplace l'entité d'un bloc (et ses pièces) quand son genre a changé
+function replaceBlock(k: string, kind: string): void {
+    const old = game.idAt.get(k)!, gone = new Set([old, ...game.parts.filter((p) => p.parent === old).map((p) => p.eid)]);
+    for (const eid of gone) game.world.destroy(eid);
+    game.parts = game.parts.filter((p) => !gone.has(p.eid));
+    game.spawned = game.spawned.filter((e) => !gone.has(e));
+    game.rest.delete(old);
+    game.kindOf.delete(old);
+    game.idAt.set(k, placeBlock(k, kind));
+}
+
+// Met la scène d'accord avec la colle de l'état : un collant qui s'est collé perd ses gouttes
+// (il n'est plus collant), et chaque paire de blocs collés reçoit un pont de colle.
+function syncGlue(pop: boolean): void {
+    const s = game.state;
+    for (const [k, kind] of s.blocks as Map<string, string>) {
+        const eid = game.idAt.get(k);
+        if (eid !== undefined && game.kindOf.get(eid) !== kind) replaceBlock(k, kind);
+    }
+    const want = new Map<string, [number, number, "x" | "z"]>();
+    for (const e of s.glue as Set<string>) {
+        const [ka, kb] = e.split("|"), a = game.idAt.get(ka), b = game.idAt.get(kb);
+        if (a === undefined || b === undefined) continue;
+        want.set(a < b ? `${a}|${b}` : `${b}|${a}`, [a, b, ka.split(",")[0] === kb.split(",")[0] ? "x" : "z"]);
+    }
+    for (const [key, br] of game.glue) if (!want.has(key)) { game.world.destroy(br.eid); game.glue.delete(key); }
+    for (const [key, [a, b, axis]] of want) {
+        if (game.glue.has(key)) continue;
+        const eid = spawn(game.rest.get(a)!.t, "glue", [0, 0, 0]);
+        game.glue.set(key, { eid, a, b, axis, age: pop ? 0 : 1, baseA: game.rest.get(a)!.s[0], baseB: game.rest.get(b)!.s[0] });
+    }
+}
+
+// Les ponts se placent entre leurs deux blocs et prennent la plus petite de leurs échelles
+function followGlue(dt: number): void {
+    const T = game.world.storage(Transform), tr = T.translation, sc = T.scale;
+    for (const br of game.glue.values()) {
+        br.age += dt;
+        const grow = br.age < 0.3 ? EASE.back(br.age / 0.3) : 1;
+        const k = Math.min(sc.x.get(br.a) / br.baseA, sc.x.get(br.b) / br.baseB) * grow;
+        tr.set(br.eid, (tr.x.get(br.a) + tr.x.get(br.b)) / 2, (tr.y.get(br.a) + tr.y.get(br.b)) / 2 + 0.04, (tr.z.get(br.a) + tr.z.get(br.b)) / 2);
+        const [lx, lz] = br.axis === "x" ? [0.46, 0.42] : [0.42, 0.46];
+        sc.set(br.eid, lx * k, 0.58 * k, lz * k);
+    }
+}
+
 // Trou : une fosse avec un fond sombre et des parois dégradées, plutôt qu'un vide
 function putPit(k: string): void {
     const s = game.state, [r, c] = k.split(",").map(Number);
@@ -370,6 +429,9 @@ function rebuild(intro: boolean): void {
     const world = game.world, s = game.state;
     for (const eid of game.spawned) world.destroy(eid);
     for (const sp of game.sparks) world.destroy(sp.eid);
+    for (const br of game.glue.values()) world.destroy(br.eid);
+    game.glue.clear();
+    game.kindOf.clear();
     game.spawned = [];
     game.parts = [];
     game.sparks = [];
@@ -397,31 +459,43 @@ function rebuild(intro: boolean): void {
         if (s.defl.has(k)) put(k, "deflector", 0.25, [1.3, 0.5, 0.15], { yaw: s.defl.get(k) === "/" ? Math.PI / 4 : -Math.PI / 4 });
     }
 
-    for (const [k, kind] of s.blocks as Map<string, string>) game.idAt.set(k, putBlock(k, kind));
+    for (const [k, kind] of s.blocks as Map<string, string>) game.idAt.set(k, placeBlock(k, kind));
 
     game.idAt.set("player", put(s.player as unknown as string, "player", 0.35, [0.6, 0.7, 0.6], { mesh: game.ball }));
     // l'œil indique la direction du joueur ; il le suit à chaque image (voir followEye)
     game.eye = put(s.player as unknown as string, "eye", 0.5, [0.2, 0.2, 0.2], { mesh: game.ball });
 
+    syncGlue(false);
     game.anim = intro ? introTimeline() : null;
     hud();
 }
 
-// Arrivée d'un niveau : les cases poussent en vague depuis un coin, le joueur tombe en dernier
+// Arrivée d'un niveau : la caméra recule puis se pose, le sol monte en vague depuis le joueur,
+// les blocs tombent dessus, et le joueur atterrit en dernier en s'écrasant un peu.
 function introTimeline(): Timeline {
-    const tl = new Timeline(), player = game.idAt.get("player")!;
+    const tl = new Timeline(), player = game.idAt.get("player")!, P = game.rest.get(player)!.t;
+    const blocks = new Set(game.idAt.values()), wave = 0.035;
+    let far = 0;
     for (const eid of game.rest.keys()) {
-        if (eid === game.eye) continue;
-        const { t, s } = game.rest.get(eid)!;
-        const t0 = (t[0] + t[2] + 20) * 0.025 - 0.3 + (eid === player ? 0.25 : 0);
+        if (eid === game.eye || eid === player) continue;
+        const { t, s } = game.rest.get(eid)!, d = Math.hypot(t[0] - P[0], t[2] - P[2]);
+        far = Math.max(far, d);
+        const block = blocks.has(eid), t0 = (block ? 0.25 : 0) + d * wave, dur = block ? 0.45 : 0.42;
         tl.add({ eid, t0: 0, t1: 0, prop: "scale", from: [0, 0, 0], to: [0, 0, 0], ease: EASE.linear });
-        tl.add({ eid, t0, t1: t0 + 0.35, prop: "scale", from: [0, 0, 0], to: s, ease: EASE.back });
-        tl.add({ eid, t0, t1: t0 + 0.35, prop: "translation", from: [t[0], t[1] + (eid === player ? 2 : 0.6), t[2]], to: t, ease: EASE.out });
+        tl.add({ eid, t0, t1: t0 + dur * 0.7, prop: "scale", from: [0, 0, 0], to: s, ease: EASE.back });
+        tl.add({ eid, t0, t1: t0 + dur, prop: "translation", from: [t[0], t[1] + (block ? 1.6 : -1.5), t[2]], to: t, ease: block ? EASE.bounce : EASE.out });
     }
-    // on recale le début à 0
-    const shift = Math.min(...tl.tweens.filter((w) => w.t1 > 0).map((w) => w.t0));
-    for (const w of tl.tweens) if (w.t1 > 0) { w.t0 -= shift; w.t1 -= shift; }
-    tl.end -= shift;
+    // le joueur tombe du ciel et rebondit
+    const { s } = game.rest.get(player)!, land = 0.3 + far * wave, fall = 0.6;
+    tl.add({ eid: player, t0: 0, t1: 0, prop: "scale", from: [0, 0, 0], to: [0, 0, 0], ease: EASE.linear });
+    tl.add({ eid: player, t0: land, t1: land, prop: "scale", from: s, to: s, ease: EASE.linear });
+    tl.add({ eid: player, t0: land, t1: land + fall, prop: "translation", from: [P[0], P[1] + 5, P[2]], to: P, ease: EASE.bounce });
+    const squash: V3 = [s[0] * 1.3, s[1] * 0.6, s[2] * 1.3];
+    tl.add({ eid: player, t0: land + fall * 0.36, t1: land + fall * 0.46, prop: "scale", from: s, to: squash, ease: EASE.out });
+    tl.add({ eid: player, t0: land + fall * 0.46, t1: land + fall * 0.7, prop: "scale", from: squash, to: s, ease: EASE.back });
+    // la caméra part de plus loin
+    const cam = game.world.storage(Camera).size, size = viewSize(game.state);
+    tl.track(0, land + fall * 0.5, size * 1.4, size, EASE.inOut, (v) => cam.set(game.camera, v));
     return tl;
 }
 
@@ -495,18 +569,36 @@ function finishAnim(): void {
     // filet de sécurité : si la scène ne correspond plus à l'état, on la reconstruit
     const blocks = game.state.blocks as Map<string, string>;
     if (blocks.size !== game.idAt.size - 1 || [...blocks.keys()].some((k) => !game.idAt.has(k))) rebuild(false);
+    else syncGlue(true);
     if (isWin(game.state) && !game.won) celebrate();
 }
 
-// Sortie atteinte : le joueur saute de joie, puis l'écran de victoire s'affiche
+// Sortie atteinte : le joueur saute de joie puis se fond dans la lumière de la sortie,
+// le niveau se défait en vague depuis la sortie, et l'écran de victoire s'affiche.
 function celebrate(): void {
     game.won = true;
     progress.win(LEVELS[game.index].name, game.history.length);
-    const player = game.idAt.get("player")!, p = game.rest.get(player)!.t, tl = new Timeline();
+    const player = game.idAt.get("player")!, { t: p, s } = game.rest.get(player)!, tl = new Timeline();
     burst(p);
-    tl.add({ eid: player, t0: 0, t1: 0.3, prop: "translation", from: p, to: p, ease: EASE.linear, arc: 0.6 });
-    tl.add({ eid: player, t0: 0.3, t1: 0.55, prop: "translation", from: p, to: p, ease: EASE.linear, arc: 0.3 });
-    tl.cue(0.65, () => { if (ui.mode === "play") ui.show("win"); });
+    tl.add({ eid: player, t0: 0, t1: 0.34, prop: "translation", from: p, to: p, ease: EASE.linear, arc: 0.7 });
+    tl.add({ eid: player, t0: 0.34, t1: 0.62, prop: "translation", from: p, to: [p[0], 0, p[2]], ease: EASE.in });
+    tl.add({ eid: player, t0: 0.34, t1: 0.62, prop: "scale", from: s, to: [0, 0, 0], ease: EASE.in });
+    tl.cue(0.6, () => {
+        burst([p[0], -0.1, p[2]]);
+        for (const sp of game.sparks) sp.loop = false; // la sortie s'éteint
+    });
+    const wave = 0.035, start = 0.62;
+    let end = start;
+    for (const [eid, { t, s: sc }] of game.rest) {
+        if (eid === player || eid === game.eye) continue;
+        const t0 = start + Math.hypot(t[0] - p[0], t[2] - p[2]) * wave;
+        tl.add({ eid, t0, t1: t0 + 0.45, prop: "translation", from: t, to: [t[0], t[1] - 2.5, t[2]], ease: EASE.in });
+        tl.add({ eid, t0, t1: t0 + 0.45, prop: "scale", from: sc, to: [0, 0, 0], ease: EASE.in });
+        end = Math.max(end, t0 + 0.45);
+    }
+    const cam = game.world.storage(Camera).size, size = viewSize(game.state);
+    tl.track(start, end, size, size * 0.85, EASE.inOut, (v) => cam.set(game.camera, v));
+    tl.cue(end + 0.15, () => { if (ui.mode === "play" || ui.mode === "pause") ui.show("win"); });
     game.anim = tl;
 }
 
@@ -576,13 +668,16 @@ export const PuzzlePlugin: Plugin = {
             play: (i) => { finishAnim(); startLevel(i); },
             current: () => game.index,
             moves: () => game.history.length,
+            // retour au titre après une victoire : on affiche le niveau suivant derrière le menu
+            title: () => { if (game.won) { finishAnim(); startLevel(Math.min(game.index + 1, LEVELS.length - 1)); } },
         });
     },
     systems: [
         {
             name: "Puzzle/Play",
             update(world: World) {
-                if (ui.mode !== "play") game.queue = [];
+                // pendant la sortie de niveau, plus aucune commande
+                if (ui.mode !== "play" || (game.won && game.anim)) game.queue = [];
                 // une action autre qu'un déplacement (annuler, recommencer…) passe sans attendre la fin de l'animation
                 if (game.queue.length && game.queue[0].length > 1) act(game.queue.shift()!);
                 if (game.anim) {
@@ -598,6 +693,7 @@ export const PuzzlePlugin: Plugin = {
                 }
                 game.clock += world.time.realDeltaTime;
                 followParts();
+                followGlue(world.time.realDeltaTime);
                 followEye();
                 updateSparks(world.time.realDeltaTime);
                 pulseExit();

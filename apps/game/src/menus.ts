@@ -48,6 +48,7 @@ export interface MenuActions {
     play(index: number): void; // lance (ou relance) un niveau
     current(): number; // niveau affiché
     moves(): number; // coups joués dans le niveau en cours
+    title?(): void; // appelé à l'ouverture de l'écran titre
 }
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
@@ -105,7 +106,7 @@ export const ui = {
         for (const m of MENUS) $(`m-${m}`).hidden = m !== mode;
         $("ui").classList.toggle("on", mode !== "play");
         $("hud").classList.toggle("dim", mode === "title" || mode === "levels");
-        if (mode === "title") this.renderTitle();
+        if (mode === "title") { this.actions.title?.(); this.renderTitle(); }
         if (mode === "levels") this.renderLevels();
         if (mode === "pause") this.renderPause();
         if (mode === "options") this.renderOptions();
@@ -189,6 +190,19 @@ export const ui = {
         document.querySelectorAll<HTMLButtonElement>("[data-speed]").forEach((b) =>
             b.classList.toggle("on", b.dataset.speed === progress.speed),
         );
+    },
+
+    // Carton de titre au début d'un niveau (seulement en jeu, pas derrière un menu)
+    card(i: number) {
+        requestAnimationFrame(() => {
+            if (this.mode !== "play") return;
+            const l = LEVELS[i], el = $("card");
+            $("card-world").textContent = l.world.split(" · ")[0] + (l.lot ? ` · ${l.lot}` : "");
+            $("card-name").textContent = `${i + 1}. ${l.name}`;
+            el.classList.remove("on");
+            void el.offsetWidth; // relance l'animation CSS
+            el.classList.add("on");
+        });
     },
 
     // Nouveau niveau : l'indice redevient caché
