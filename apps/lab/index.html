@@ -270,9 +270,10 @@
         <select id="tbl-stage" aria-label="Filtrer par temps"><option value="">Tous les temps</option><option>Découverte</option><option>Approfondissement</option><option>Twist</option><option>Finale</option><option>Autre</option></select>
         <span class="ed-note" id="tbl-count"></span>
       </div>
+      <div class="charts" id="tbl-charts"></div>
       <div class="tbl-wrap"><table class="tbl" id="tbl"></table></div>
       <details><summary class="ed-note">Comment lire ce tableau</summary>
-        <p><b>Coups</b> : longueur de la solution la plus courte. <b>Forts</b> et <b>faibles</b> : moments de décision le long de cette solution (voir l'onglet Principes). <b>Explo.</b> : gestes qu'on peut défaire le long de la solution (exploration, à part des choix). <b>Sans issue</b> : part des états explorés d'où l'on ne peut plus gagner.</p>
+        <p><b>Coups</b> : longueur de la solution la plus courte. <b>Forts</b> et <b>faibles</b> : moments de décision le long de cette solution (voir l'onglet Principes). <b>Explo.</b> : gestes qu'on peut défaire le long de la solution (pousser un bloc puis le ramener, par exemple). Ce ne sont pas des choix, mais ils laissent le joueur essayer et observer sans tout perdre : un niveau sans exploration peut sembler mécanique. Survole le chiffre pour le nombre de moments concernés. <b>Sans issue</b> : part des états explorés d'où l'on ne peut plus gagner.</p>
         <p>Alertes : <b>peu de choix</b> (moins de 2 choix forts hors découverte), <b>bloc inutile</b>, <b>mécanique non indispensable</b> (la remplacer laisse le niveau résoluble), <b>impasse superflue</b>. Une alerte n'est pas forcément une erreur : c'est un endroit à relire.</p>
         <p>Clique sur le titre d'une colonne pour trier (un second clic inverse l'ordre) : par exemple « Forts » pour voir d'abord les niveaux avec le moins de vrais choix, ou « Alertes » pour ceux qui en ont le plus. Les filtres limitent l'affichage aux niveaux avec ou sans alerte, ou à un temps (découverte, approfondissement, twist, finale). Les niveaux pas encore évalués restent en bas.</p>
       </details>
