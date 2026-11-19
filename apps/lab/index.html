@@ -25,7 +25,7 @@
     <div id="mechs"></div>
   </div>
 
-  <div id="tab-princ" hidden>
+  <div id="tab-princ" class="cards" hidden>
     <p class="sub" style="margin-top:-4px">Les règles qu'on suit pour créer et valider chaque niveau.</p>
     <div class="card">
       <h3>Structure</h3>
@@ -67,7 +67,7 @@
     </div>
   </div>
 
-  <div id="tab-ideas" hidden>
+  <div id="tab-ideas" class="cards" hidden>
     <div class="card idea">
       <h3>Demi-carré cassant <span class="tag">En réserve</span></h3>
       <p>Un demi-carré (poussé seulement par sa face plate) qui se brise aussi sous le choc d'un rond, comme un bloc cassant.</p>
@@ -223,6 +223,8 @@
 
   <div id="tab-edit" hidden>
     <p class="sub" style="margin-top:-4px">Dessine un niveau, teste-le, puis mesure s'il offre de vrais choix. Le solveur, l'évaluation et l'ajustement automatique utilisent le même moteur de règles que le jeu.</p>
+    <div class="ed-grid">
+    <div class="ed-main">
     <div class="card">
       <h3>Plan</h3>
       <div class="ed-bar"><select id="ed-load" aria-label="Niveau existant"></select><button class="ed-btn" id="ed-loadbtn">Charger</button></div>
@@ -243,6 +245,8 @@
         <button class="ed-btn" id="ed-copy">Copier le plan (JSON)</button>
       </details>
     </div>
+    </div>
+    <div class="ed-side">
     <div class="card" id="ed-results"><h3>Résultats</h3><p class="ed-note">Lance le solveur ou l'évaluation.</p></div>
     <div class="card">
       <h3>Ajustement automatique</h3>
@@ -250,6 +254,8 @@
       <div class="ed-bar">Durée <input type="number" id="ed-osec" value="30" min="5" max="600"> s · Cible <input type="number" id="ed-otarget" value="2" min="1" max="6"> forts · Cases modifiées max <input type="number" id="ed-odiff" value="7" min="1" max="30"></div>
       <div class="ed-bar"><button class="ed-btn main" id="ed-opt">Lancer l'ajustement</button></div>
       <div id="ed-optres"></div>
+    </div>
+    </div>
     </div>
   </div>
 
@@ -269,11 +275,15 @@
 
   <div id="tab-play">
   <div class="testbar" id="testbar" hidden><span>Test du niveau de l'éditeur</span><button id="testback">← Retour à l'éditeur</button></div>
+  <div class="play-grid">
+  <div class="play-side">
   <div class="nav">
     <div class="worlds" id="worlds"></div>
     <div class="lots" id="lots"></div>
     <button class="navtog" id="navtog"></button>
   </div>
+  </div>
+  <div class="play-main">
   <div class="head2">
     <button class="nb" id="prev" aria-label="Niveau précédent">‹</button>
     <div class="ttl"><div class="stage" id="lvstage"></div><h2 id="lvname"></h2></div>
@@ -304,11 +314,15 @@
     </div>
     <div class="act right"><button id="act">✦ Action</button><button id="reset">⟲ Rejouer</button></div>
   </div>
+  </div>
 
-  <div class="card">
+  <div class="play-side">
+  <div class="card teach-card">
     <h3>Ce que le niveau fait découvrir</h3>
     <div id="teach"></div>
     <details id="hintbox"><summary>Indice</summary><p id="hint"></p><p><button class="ed-btn" id="solbtn">▶ Voir la solution pas à pas</button></p></details>
+  </div>
+  </div>
   </div>
 
 
