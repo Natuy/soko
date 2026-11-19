@@ -67,9 +67,12 @@ const AN = (function () {
   const bk = s => stateKey(Object.assign({}, s, { player: '' }));
   // Le long de la solution la plus courte : à chaque configuration de blocs, combien de gestes possibles
   // (pousser un bloc, se téléporter ; marcher ne compte pas) et combien mènent encore à la victoire.
+  // Chaque entrée vaut [gestes possibles, gestes gagnants, indice du coup de la solution où ce choix se présente].
   function choices(ex) {
     const { st, adj, good, path } = ex; const dec = []; const seen = new Set();
-    for (const i of [0, ...path.slice(0, -1)]) {
+    const starts = [0, ...path.slice(0, -1)];
+    for (let j = 0; j < starts.length; j++) {
+      const i = starts[j];
       const key = bk(st[i]); if (seen.has(key)) continue; seen.add(key);
       const zone = new Set([i]), q = [i], opts = new Map();
       while (q.length) {
@@ -80,7 +83,7 @@ const AN = (function () {
           else { const k2 = kb === ka ? 'tp' + stateKey(st[b]) : kb; opts.set(k2, (opts.get(k2) || false) || good.has(b)); }
         }
       }
-      dec.push([opts.size, [...opts.values()].filter(Boolean).length]);
+      dec.push([opts.size, [...opts.values()].filter(Boolean).length, j]);
     }
     return dec;
   }

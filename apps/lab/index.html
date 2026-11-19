@@ -17,6 +17,7 @@
     <button id="tb-princ" role="tab">Principes</button>
     <button id="tb-ideas" role="tab">Idées</button>
     <button id="tb-edit" role="tab">Éditeur</button>
+    <button id="tb-table" role="tab">Tableau</button>
   </div>
 
   <div id="tab-mech" hidden>
@@ -230,9 +231,10 @@
         <button class="ed-btn" data-rz="-c" title="Retirer une colonne">− col</button><button class="ed-btn" data-rz="+c" title="Ajouter une colonne">+ col</button>
         <button class="ed-btn" data-rz="-r" title="Retirer une ligne">− ligne</button><button class="ed-btn" data-rz="+r" title="Ajouter une ligne">+ ligne</button></div>
       <div class="ed-palette" id="ed-palette"></div>
-      <p class="ed-cur">Outil : <b id="ed-toolname"></b>. Clique ou glisse sur le plan pour peindre.</p>
+      <div class="ed-bar ed-cur"><span>Outil : <b id="ed-toolname"></b>. Clique ou glisse sur le plan pour peindre.</span><span style="flex:1"></span><button class="ed-btn" id="ed-undo" title="Annuler (Ctrl+Z)" disabled>↶ Annuler</button><button class="ed-btn" id="ed-redo" title="Rétablir (Ctrl+Y ou Ctrl+Maj+Z)" disabled>↷ Rétablir</button></div>
       <div class="board-wrap"><div class="board" id="ed-board"></div></div>
       <div class="ed-errors" id="ed-errors" hidden></div>
+      <div class="ed-live" id="ed-live" aria-live="polite"></div>
       <div class="ed-bar" style="margin-top:8px"><button class="ed-btn main" id="ed-test">▶ Tester</button><button class="ed-btn" id="ed-solve">Résoudre</button><button class="ed-btn" id="ed-eval">Évaluer</button><button class="ed-btn" id="ed-stop" hidden>Arrêter</button></div>
       <p class="ed-status" id="ed-status"></p>
       <details><summary class="ed-note">Plan en texte (modifiable)</summary>
@@ -251,6 +253,20 @@
     </div>
   </div>
 
+  <div id="tab-table" hidden>
+    <p class="sub" style="margin-top:-4px">Toutes les mesures de l'évaluation, niveau par niveau, pour lire la courbe de difficulté d'un monde et repérer les niveaux qui s'écartent des principes. Le calcul tourne en tâche de fond.</p>
+    <div class="card">
+      <div class="tbl-worlds" id="tbl-worlds"></div>
+      <div class="ed-bar"><button class="ed-btn main" id="tbl-run">Évaluer ce monde</button><button class="ed-btn" id="tbl-all">Évaluer tous les mondes</button><button class="ed-btn" id="tbl-stop" hidden>Arrêter</button></div>
+      <p class="ed-status" id="tbl-status"></p>
+      <div class="tbl-wrap"><table class="tbl" id="tbl"></table></div>
+      <details><summary class="ed-note">Comment lire ce tableau</summary>
+        <p><b>Coups</b> : longueur de la solution la plus courte. <b>Forts</b> et <b>faibles</b> : moments de décision le long de cette solution (voir l'onglet Principes). <b>Sans issue</b> : part des états explorés d'où l'on ne peut plus gagner.</p>
+        <p>Alertes : <b>peu de choix</b> (moins de 2 choix forts hors découverte), <b>bloc inutile</b>, <b>mécanique non indispensable</b> (la remplacer laisse le niveau résoluble), <b>impasse superflue</b>. Une alerte n'est pas forcément une erreur : c'est un endroit à relire.</p>
+      </details>
+    </div>
+  </div>
+
   <div id="tab-play">
   <div class="testbar" id="testbar" hidden><span>Test du niveau de l'éditeur</span><button id="testback">← Retour à l'éditeur</button></div>
   <div class="nav">
@@ -266,6 +282,16 @@
   </div>
 
   <div class="board-wrap" id="wrap"><div class="board" id="board"></div></div>
+  <div class="rpbar" id="rpbar" hidden>
+    <div class="rphead"><b>Relecture de la solution</b><span id="rpcount"></span><button class="rpx" id="rp-quit" aria-label="Quitter la relecture">✕</button></div>
+    <div class="rpctl">
+      <button id="rp-first" title="Début (Origine)">⏮</button><button id="rp-prev" title="Coup précédent (←)">◀</button>
+      <button id="rp-play" class="main" title="Lecture / pause (Espace)">▶</button>
+      <button id="rp-next" title="Coup suivant (→)">▶︎|</button><button id="rp-last" title="Fin (Fin)">⏭</button>
+    </div>
+    <div class="rptl" id="rptl"></div>
+    <p class="rpleg" id="rpleg"></p>
+  </div>
   <p class="tip">Glisse sur le plateau, utilise les flèches ou le clavier.</p>
 
   <div class="controls">
@@ -282,7 +308,7 @@
   <div class="card">
     <h3>Ce que le niveau fait découvrir</h3>
     <div id="teach"></div>
-    <details id="hintbox"><summary>Indice</summary><p id="hint"></p></details>
+    <details id="hintbox"><summary>Indice</summary><p id="hint"></p><p><button class="ed-btn" id="solbtn">▶ Voir la solution pas à pas</button></p></details>
   </div>
 
 
