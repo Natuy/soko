@@ -23,42 +23,103 @@ import {
     type World,
 } from "@dylanebert/shallot";
 import type { MaterialHandle } from "@dylanebert/shallot/standard/rendering";
-import { applyMove, DIRS, isWin, LEVELS, parseLevel } from "../../../packages/core/src/index.js";
+import { applyMove, DIRS, isWin, LEVELS, parseLevel, WORLDS } from "../../../packages/core/src/index.js";
+import { Bloom, BloomPlugin } from "@dylanebert/shallot/extras";
 import { EASE, plan, Timeline, type V3 } from "./anim";
+import { bevelBox, wedge } from "./meshes";
 import { progress, ui } from "./menus";
 
 type Move = "U" | "D" | "L" | "R" | "*";
 type Action = Move | "undo" | "reset" | "next" | "prev";
 type State = ReturnType<typeof parseLevel>;
 
+type RGBA = [number, number, number, number];
+// Matériaux. Ceux du décor (sol, murs, trous) sont recolorés selon le monde (voir THEMES).
 const COLORS = {
     floor: [0.84, 0.79, 0.7, 1],
+    floorAo1: [0.84, 0.79, 0.7, 1],
+    floorAo2: [0.84, 0.79, 0.7, 1],
     filled: [0.66, 0.6, 0.52, 1],
     wall: [0.29, 0.25, 0.22, 1],
+    wallTop: [0.36, 0.31, 0.27, 1],
+    pitWall: [0.2, 0.17, 0.15, 1],
+    pitMid: [0.14, 0.12, 0.1, 1],
+    pitDeep: [0.08, 0.07, 0.06, 1],
     exit: [0.91, 0.7, 0.23, 1],
+    exitRing: [1, 0.85, 0.45, 1],
+    spark: [1, 0.9, 0.6, 1],
     square: [0.78, 0.41, 0.25, 1],
+    squareTop: [0.86, 0.52, 0.34, 1],
     round: [0.25, 0.5, 0.66, 1],
+    roundBand: [0.17, 0.36, 0.5, 1],
     player: [0.18, 0.54, 0.36, 1],
     eye: [0.1, 0.12, 0.1, 1],
     breakable: [0.89, 0.76, 0.37, 1],
+    crack: [0.36, 0.26, 0.12, 1],
     half: [0.48, 0.37, 0.65, 1],
+    halfTop: [0.62, 0.5, 0.8, 1],
     sticky: [0.55, 0.78, 0.25, 1],
-    mirror: [0.85, 0.9, 0.94, 1],
+    stickyDrop: [0.4, 0.62, 0.14, 1],
+    mirror: [0.36, 0.43, 0.5, 1],
+    mirrorFace: [0.85, 0.92, 0.98, 1],
+    mirrorBar: [0.3, 0.36, 0.42, 1],
     fixed: [0.33, 0.35, 0.38, 1],
+    rivet: [0.6, 0.62, 0.66, 1],
     teal: [0.23, 0.6, 0.56, 1],
     deflector: [0.37, 0.32, 0.27, 1],
     glass: [0.6, 0.8, 0.9, 1],
-} as const;
+} satisfies Record<string, RGBA>;
 type ColorName = keyof typeof COLORS;
+// Réglages de matériau autres que la couleur (émissif ≈ 1 : blanc plein, au-delà le bloom déborde)
+const MAT_OPTS: Partial<Record<ColorName, { emissive?: V3; metallic?: number; perceptualRoughness?: number }>> = {
+    exit: { emissive: [1.1, 0.7, 0.15] },
+    exitRing: { emissive: [2.2, 1.5, 0.5] },
+    spark: { emissive: [3, 2.2, 0.8] },
+    mirrorFace: { metallic: 0.9, perceptualRoughness: 0.12, emissive: [0.12, 0.16, 0.2] },
+    fixed: { metallic: 0.5, perceptualRoughness: 0.45 },
+    rivet: { metallic: 0.8, perceptualRoughness: 0.3 },
+    sticky: { perceptualRoughness: 0.25 },
+    stickyDrop: { perceptualRoughness: 0.15 },
+};
+
+// ---- Ambiance par monde : couleurs du décor, fond et lumière ----
+interface Theme { floor: V3; wall: V3; bg: number; sun: number; sunLux: number; ambient: number; ambientLux: number }
+const THEMES: Theme[] = [
+    // Monde 1 · atelier : bois clair et briques chaudes
+    { floor: [0.84, 0.79, 0.7], wall: [0.29, 0.25, 0.22], bg: 0x191816, sun: 0xffe8cc, sunLux: 5000, ambient: 0xfff4e6, ambientLux: 500 },
+    // Monde 2 · carrière : grès et terre cuite
+    { floor: [0.87, 0.75, 0.6], wall: [0.45, 0.28, 0.2], bg: 0x1e1511, sun: 0xffd6a8, sunLux: 5400, ambient: 0xffe6d0, ambientLux: 470 },
+    // Monde 3 · serre : dalles vert pâle, murs de mousse
+    { floor: [0.77, 0.83, 0.71], wall: [0.2, 0.31, 0.24], bg: 0x121a14, sun: 0xf2ffe0, sunLux: 4800, ambient: 0xe8ffe8, ambientLux: 520 },
+    // Monde 4 · palais des glaces : marbre froid, ardoise bleutée
+    { floor: [0.8, 0.84, 0.9], wall: [0.22, 0.27, 0.36], bg: 0x11151d, sun: 0xe2edff, sunLux: 5200, ambient: 0xe6eeff, ambientLux: 520 },
+    // Monde 5 · crépuscule : lavande et prune, lumière rasante orangée
+    { floor: [0.8, 0.74, 0.83], wall: [0.3, 0.2, 0.34], bg: 0x17111c, sun: 0xffc4a0, sunLux: 5000, ambient: 0xd6c8ff, ambientLux: 480 },
+];
+const shade = (c: V3, k: number): RGBA => [c[0] * k, c[1] * k, c[2] * k, 1];
 
 const SPEED = { normale: 1, rapide: 1.8, aucune: Infinity } as const;
 const DOOR = { open: { y: 0.03, s: [0.9, 0.06, 0.9] as V3 }, closed: { y: 0.45, s: [0.9, 0.9, 0.9] as V3 } };
+
+// Petite pièce qui suit un bloc (rayure, fissure, rivet…) : Shallot n'a pas de hiérarchie,
+// on recopie donc la position et l'échelle du parent à chaque image.
+interface Part { eid: number; parent: number; off: V3; s: V3; base: number }
+// Étincelle : sort de la sortie en continu, ou jaillit quand le joueur l'atteint
+interface Spark { eid: number; p: V3; v: V3; age: number; life: number; size: number; loop: boolean }
 
 // ---- État de la partie (hors ECS : c'est le modèle, la scène n'en est qu'une vue) ----
 const game = {
     world: null as unknown as World,
     mats: null as unknown as Record<ColorName, MaterialHandle>,
     ball: null as unknown as MeshHandle,
+    wedge: null as unknown as MeshHandle,
+    bevel: null as unknown as MeshHandle,
+    sun: 0,
+    theme: -1,
+    parts: [] as Part[],
+    sparks: [] as Spark[],
+    exitRing: -1,
+    clock: 0,
     camera: 0,
     index: 0,
     state: null as unknown as State,
@@ -91,8 +152,32 @@ function startLevel(i: number): void {
     try { history.replaceState(null, "", `#niveau-${game.index + 1}`); } catch {}
     if (game.world) {
         game.world.storage(Camera).size.set(game.camera, viewSize(game.state));
+        applyTheme(Math.max(0, WORLDS.findIndex((w) => w.world === LEVELS[game.index].world)));
         rebuild(true);
     }
+}
+
+// Recolore le décor et règle fond et lumière pour le monde du niveau
+function applyTheme(i: number): void {
+    const t = THEMES[i % THEMES.length], world = game.world;
+    if (game.theme === i) return;
+    game.theme = i;
+    const mats = world.resource(Materials), set = (name: ColorName, c: RGBA) => mats.update(game.mats[name], { baseColor: c });
+    // les cases bordées de murs sont plus sombres : une occlusion ambiante « cuite » dans la couleur
+    set("floor", shade(t.floor, 1));
+    set("floorAo1", shade(t.floor, 0.89));
+    set("floorAo2", shade(t.floor, 0.78));
+    set("filled", shade(t.floor, 0.72));
+    set("wall", shade(t.wall, 1));
+    set("wallTop", shade(t.wall, 1.28));
+    set("pitWall", shade(t.wall, 0.62));
+    set("pitMid", shade(t.wall, 0.4));
+    set("pitDeep", shade(t.wall, 0.22));
+    world.storage(Camera).clearColor.set(game.camera, t.bg);
+    world.storage(DirectionalLight).color.set(game.sun, t.sun);
+    world.storage(DirectionalLight).illuminance.set(game.sun, t.sunLux);
+    Object.assign(world.resource(GlobalAmbientLight), { color: t.ambient, brightness: t.ambientLux });
+    document.body.style.background = `#${t.bg.toString(16).padStart(6, "0")}`;
 }
 
 function hud(): void {
@@ -138,29 +223,170 @@ function push(a: Action): void {
 }
 
 // ---- Construction de la scène à partir de l'état ----
-function put(key: string, color: ColorName, y: number, scale: V3, opts: { mesh?: MeshHandle; yaw?: number } = {}): number {
-    const world = game.world, eid = world.create(), t = cellOf(key, y);
+function spawn(t: V3, color: ColorName, scale: V3, opts: { mesh?: MeshHandle; yaw?: number } = {}): number {
+    const world = game.world, eid = world.create();
     world.add(eid, Transform, { translation: t, rotation: eulerToQuat(0, opts.yaw ?? 0, 0), scale });
     world.add(eid, MeshInstance, opts.mesh ? { mesh: opts.mesh } : {});
     world.add(eid, MeshMaterial, game.mats[color]);
+    return eid;
+}
+
+function put(key: string, color: ColorName, y: number, scale: V3, opts: { mesh?: MeshHandle; yaw?: number; dx?: number; dz?: number } = {}): number {
+    const t = cellOf(key, y);
+    t[0] += opts.dx ?? 0;
+    t[2] += opts.dz ?? 0;
+    const eid = spawn(t, color, scale, opts);
     game.spawned.push(eid);
     game.rest.set(eid, { t, s: scale });
     return eid;
 }
 
+// Ajoute une pièce à un bloc ; off est le décalage depuis son centre, au repos
+function part(parent: number, color: ColorName, off: V3, scale: V3, opts: { mesh?: MeshHandle; yaw?: number } = {}): void {
+    const r = game.rest.get(parent)!;
+    const eid = spawn([r.t[0] + off[0], r.t[1] + off[1], r.t[2] + off[2]], color, scale, opts);
+    game.spawned.push(eid);
+    game.parts.push({ eid, parent, off, s: scale, base: r.s[0] });
+}
+
+// Un bloc et ses détails : chaque mécanique a une silhouette qui se lit sans légende
+const ARROW_DIR: Record<string, [number, number, number]> = { ">": [1, 0, 0], "<": [-1, 0, Math.PI], v: [0, 1, -Math.PI / 2], "^": [0, -1, Math.PI / 2] };
+function putBlock(k: string, kind: string): number {
+    const base = kind.replace("*", ""), sticky = kind.endsWith("*"), top = 0.405;
+    const drops = (eid: number, y: number) => {
+        for (const [x, z, s] of [[-0.17, -0.12, 0.15], [0.16, -0.05, 0.12], [-0.02, 0.17, 0.13]])
+            part(eid, "stickyDrop", [x, y, z], [s, s * 0.7, s], { mesh: game.ball });
+    };
+    if (base === "R") {
+        const eid = put(k, sticky ? "sticky" : "round", 0.4, [0.8, 0.8, 0.8], { mesh: game.ball });
+        part(eid, sticky ? "stickyDrop" : "roundBand", [0, 0, 0], [0.83, 0.13, 0.83], { mesh: game.ball }); // rayure de bille
+        if (sticky) drops(eid, 0.33);
+        return eid;
+    }
+    if (base[0] === "H") {
+        // demi-carré : un coin qui pointe dans le seul sens où il avance
+        const [dx, dz, yaw] = ARROW_DIR[base[1]];
+        const eid = put(k, "half", 0.4, [0.8, 0.8, 0.8], { mesh: game.wedge, yaw });
+        part(eid, "halfTop", [-dx * 0.05, top, -dz * 0.05], [0.5, 0.03, 0.5], { mesh: game.wedge, yaw });
+        return eid;
+    }
+    if (base === "B") {
+        // cassant : fissures sur le dessus et la face avant
+        const eid = put(k, "breakable", 0.4, [0.8, 0.8, 0.8], { mesh: game.bevel });
+        for (const [x, z, l, yaw] of [[-0.1, -0.08, 0.34, 0.5], [0.11, 0.07, 0.3, -0.7], [0.03, -0.18, 0.18, 1.3], [-0.14, 0.15, 0.16, -1.1]])
+            part(eid, "crack", [x, top, z], [l, 0.02, 0.035], { yaw });
+        part(eid, "crack", [0.08, 0.05, top], [0.035, 0.36, 0.02], { yaw: 0.25 });
+        return eid;
+    }
+    if (base === "I") {
+        // inamovible : métal sombre et rivets
+        const eid = put(k, "fixed", 0.4, [0.85, 0.8, 0.85], { mesh: game.bevel });
+        for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) part(eid, "rivet", [x * 0.26, 0.41, z * 0.26], [0.1, 0.06, 0.1], { mesh: game.ball });
+        return eid;
+    }
+    if (base[0] === "M") {
+        // miroirs : cadre et face réfléchissante ; la barre dit dans quel sens il agit (comme dans le lab)
+        const eid = put(k, base === "Mz" ? "teal" : "mirror", 0.4, [0.8, 0.8, 0.8], { mesh: game.bevel });
+        part(eid, "mirrorFace", [0, top, 0], [0.56, 0.03, 0.56]);
+        if (base === "Mh") part(eid, "mirrorBar", [0, top + 0.015, 0], [0.46, 0.03, 0.08]);
+        if (base === "Mv") part(eid, "mirrorBar", [0, top + 0.015, 0], [0.08, 0.03, 0.46]);
+        return eid;
+    }
+    // carré (et collant carré)
+    const eid = put(k, sticky ? "sticky" : "square", 0.4, [0.8, 0.8, 0.8], { mesh: game.bevel });
+    part(eid, sticky ? "stickyDrop" : "squareTop", [0, top, 0], [0.5, 0.03, 0.5]);
+    if (sticky) drops(eid, 0.43);
+    return eid;
+}
+
+// Trou : une fosse avec un fond sombre et des parois dégradées, plutôt qu'un vide
+function putPit(k: string): void {
+    const s = game.state, [r, c] = k.split(",").map(Number);
+    put(k, "pitDeep", -1.05, [1, 0.1, 1]);
+    for (const [dr, dc] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+        if (s.holes.has(`${r + dr},${c + dc}`)) continue; // fosse voisine : pas de paroi entre les deux
+        const along = dr !== 0, off = { dx: dc * 0.46, dz: dr * 0.46 };
+        put(k, "pitWall", -0.32, along ? [1, 0.44, 0.08] : [0.08, 0.44, 1], off);
+        put(k, "pitMid", -0.77, along ? [1, 0.46, 0.08] : [0.08, 0.46, 1], off);
+    }
+}
+
+// Sortie : dalle lumineuse cerclée d'un liseré qui pulse, et des étincelles qui montent
+function putExit(k: string): void {
+    put(k, "exit", -0.1, [0.96, 0.2, 0.96]);
+    for (const [dx, dz] of [[0, -1], [0, 1], [-1, 0], [1, 0]])
+        put(k, "exitRing", 0.01, dz ? [0.9, 0.03, 0.06] : [0.06, 0.03, 0.78], { dx: dx * 0.42, dz: dz * 0.42 });
+    const [x, , z] = cellOf(k, 0);
+    for (let i = 0; i < 6; i++) addSpark([x, 0, z], [0, 0, 0], 1.4, 0.06, true, i / 6);
+}
+
+function addSpark(p: V3, v: V3, life: number, size: number, loop: boolean, phase = 0): void {
+    const eid = spawn([...p], "spark", [0, 0, 0], { mesh: game.ball });
+    const sp: Spark = { eid, p: [...p], v, age: phase * life, life, size, loop };
+    if (loop) respawn(sp, p);
+    game.sparks.push(sp);
+}
+// Une étincelle de la sortie renaît au ras de la dalle, à une place au hasard
+function respawn(sp: Spark, center: V3): void {
+    sp.p = [center[0] + (Math.random() - 0.5) * 0.6, 0.05, center[2] + (Math.random() - 0.5) * 0.6];
+    sp.v = [0, 0.55 + Math.random() * 0.35, 0];
+    sp.life = 1.1 + Math.random() * 0.7;
+}
+
+function updateSparks(dt: number): void {
+    const T = game.world.storage(Transform), exit = game.state.exit ? cellOf(game.state.exit, 0) : null;
+    game.sparks = game.sparks.filter((sp) => {
+        sp.age += dt;
+        if (sp.age >= sp.life) {
+            if (!sp.loop || !exit) { game.world.destroy(sp.eid); return false; }
+            sp.age -= sp.life;
+            respawn(sp, exit);
+        }
+        if (!sp.loop) sp.v[1] -= 7 * dt; // gravité pour la gerbe de victoire
+        for (let i = 0; i < 3; i++) sp.p[i] += sp.v[i] * dt;
+        const a = sp.age / sp.life, k = sp.size * Math.min(1, a * 6) * (1 - a);
+        T.translation.set(sp.eid, sp.p[0], sp.p[1], sp.p[2]);
+        T.scale.set(sp.eid, k, k, k);
+        return true;
+    });
+}
+
+// Gerbe d'étincelles quand le joueur atteint la sortie
+function burst(at: V3): void {
+    for (let i = 0; i < 30; i++) {
+        const a = Math.random() * Math.PI * 2, sp = 0.8 + Math.random() * 1.6;
+        addSpark([at[0], at[1] + 0.2, at[2]], [Math.cos(a) * sp, 2.2 + Math.random() * 1.8, Math.sin(a) * sp], 0.7 + Math.random() * 0.5, 0.08 + Math.random() * 0.05, false);
+    }
+}
+
+// Occlusion ambiante « cuite » : une case bordée de murs reçoit un sol plus sombre
+function floorShade(r: number, c: number): ColorName {
+    const w = game.state.walls, has = (dr: number, dc: number) => w.has(`${r + dr},${c + dc}`) ? 1 : 0;
+    const score = has(-1, 0) + has(1, 0) + has(0, -1) + has(0, 1) + 0.5 * (has(-1, -1) + has(-1, 1) + has(1, -1) + has(1, 1));
+    return score >= 2 ? "floorAo2" : score >= 0.75 ? "floorAo1" : "floor";
+}
+
 function rebuild(intro: boolean): void {
     const world = game.world, s = game.state;
     for (const eid of game.spawned) world.destroy(eid);
+    for (const sp of game.sparks) world.destroy(sp.eid);
     game.spawned = [];
+    game.parts = [];
+    game.sparks = [];
     game.rest.clear();
     game.idAt.clear();
     game.doors = [];
 
     for (let r = 0; r < s.h; r++) for (let c = 0; c < s.w; c++) {
         const k = `${r},${c}`;
-        if (s.walls.has(k)) { put(k, "wall", 0.5, [1, 1, 1]); continue; }
-        if (s.holes.has(k)) continue; // un trou : pas de sol
-        put(k, k === s.exit ? "exit" : game.holes0.has(k) ? "filled" : "floor", -0.1, [0.96, 0.2, 0.96]);
+        if (s.walls.has(k)) {
+            put(k, "wall", 0.5, [1, 1, 1]);
+            put(k, "wallTop", 1.0, [0.86, 0.04, 0.86]); // dessus en relief : les murs se lisent d'en haut
+            continue;
+        }
+        if (s.holes.has(k)) { putPit(k); continue; }
+        if (k === s.exit) putExit(k);
+        else put(k, game.holes0.has(k) ? "filled" : floorShade(r, c), -0.1, [0.96, 0.2, 0.96]);
         if (s.glass.has(k)) put(k, "glass", 0.4, [0.9, 0.8, 0.2]);
         if (s.switches.has(k)) put(k, "teal", 0.02, [0.5, 0.04, 0.5]);
         if (s.plates.has(k)) put(k, "teal", 0.02, [0.45, 0.04, 0.45], { yaw: Math.PI / 4 });
@@ -171,22 +397,7 @@ function rebuild(intro: boolean): void {
         if (s.defl.has(k)) put(k, "deflector", 0.25, [1.3, 0.5, 0.15], { yaw: s.defl.get(k) === "/" ? Math.PI / 4 : -Math.PI / 4 });
     }
 
-    for (const [k, kind] of s.blocks as Map<string, string>) {
-        const base = kind.replace("*", "");
-        let eid: number;
-        if (base === "R") eid = put(k, kind.endsWith("*") ? "sticky" : "round", 0.4, [0.8, 0.8, 0.8], { mesh: game.ball });
-        else if (base === "S") eid = put(k, kind.endsWith("*") ? "sticky" : "square", 0.4, [0.8, 0.8, 0.8]);
-        else if (base === "B") eid = put(k, "breakable", 0.4, [0.8, 0.8, 0.8]);
-        else if (base === "I") eid = put(k, "fixed", 0.4, [0.85, 0.8, 0.85]);
-        else if (base === "M" || base === "Mh" || base === "Mv") eid = put(k, "mirror", 0.4, base === "Mh" ? [0.8, 0.8, 0.3] : base === "Mv" ? [0.3, 0.8, 0.8] : [0.8, 0.8, 0.8]);
-        else if (base === "Mz") eid = put(k, "teal", 0.4, [0.8, 0.8, 0.8]);
-        else if (base[0] === "H") {
-            // demi-carré : bloc aplati dans le sens de sa pointe
-            const along = base[1] === "<" || base[1] === ">";
-            eid = put(k, "half", 0.4, along ? [0.8, 0.8, 0.45] : [0.45, 0.8, 0.8]);
-        } else eid = put(k, "square", 0.4, [0.8, 0.8, 0.8]);
-        game.idAt.set(k, eid);
-    }
+    for (const [k, kind] of s.blocks as Map<string, string>) game.idAt.set(k, putBlock(k, kind));
 
     game.idAt.set("player", put(s.player as unknown as string, "player", 0.35, [0.6, 0.7, 0.6], { mesh: game.ball }));
     // l'œil indique la direction du joueur ; il le suit à chaque image (voir followEye)
@@ -199,7 +410,7 @@ function rebuild(intro: boolean): void {
 // Arrivée d'un niveau : les cases poussent en vague depuis un coin, le joueur tombe en dernier
 function introTimeline(): Timeline {
     const tl = new Timeline(), player = game.idAt.get("player")!;
-    for (const eid of game.spawned) {
+    for (const eid of game.rest.keys()) {
         if (eid === game.eye) continue;
         const { t, s } = game.rest.get(eid)!;
         const t0 = (t[0] + t[2] + 20) * 0.025 - 0.3 + (eid === player ? 0.25 : 0);
@@ -292,6 +503,7 @@ function celebrate(): void {
     game.won = true;
     progress.win(LEVELS[game.index].name, game.history.length);
     const player = game.idAt.get("player")!, p = game.rest.get(player)!.t, tl = new Timeline();
+    burst(p);
     tl.add({ eid: player, t0: 0, t1: 0.3, prop: "translation", from: p, to: p, ease: EASE.linear, arc: 0.6 });
     tl.add({ eid: player, t0: 0.3, t1: 0.55, prop: "translation", from: p, to: p, ease: EASE.linear, arc: 0.3 });
     tl.cue(0.65, () => { if (ui.mode === "play") ui.show("win"); });
@@ -307,34 +519,55 @@ function followEye(): void {
     T.scale.set(game.eye, 0.2 * k, 0.2 * k, 0.2 * k);
 }
 
+// Les pièces suivent leur bloc : même déplacement, même échelle (un bloc qui rétrécit les emporte)
+function followParts(): void {
+    const T = game.world.storage(Transform), tr = T.translation, sc = T.scale;
+    for (const p of game.parts) {
+        const k = sc.x.get(p.parent) / p.base;
+        tr.set(p.eid, tr.x.get(p.parent) + p.off[0] * k, tr.y.get(p.parent) + p.off[1] * k, tr.z.get(p.parent) + p.off[2] * k);
+        sc.set(p.eid, p.s[0] * k, p.s[1] * k, p.s[2] * k);
+    }
+}
+
+// Le liseré de la sortie respire doucement
+function pulseExit(): void {
+    const k = 0.7 + 0.3 * Math.sin(game.clock * 2.6), e = MAT_OPTS.exitRing!.emissive!;
+    game.world.resource(Materials).update(game.mats.exitRing, { emissive: [e[0] * k, e[1] * k, e[2] * k] });
+}
+
 // Taille de la vue orthographique pour que tout le niveau tienne à l'écran
 const viewSize = (s: State) => Math.max(s.w * 0.75, s.h) + 2;
 
 export const PuzzlePlugin: Plugin = {
     name: "Puzzle",
     // MeshPlugin doit être initialisé avant nous : on crée la boule avec Meshes.add
-    dependencies: [MeshPlugin],
+    dependencies: [MeshPlugin, BloomPlugin],
     initialize(world) {
         game.world = world;
         game.mats = Object.fromEntries(
             Object.entries(COLORS).map(([name, baseColor]) => [
                 name,
-                world.resource(Materials).add(StandardMaterial({ baseColor, perceptualRoughness: 0.6 })),
+                world.resource(Materials).add(StandardMaterial({ baseColor, perceptualRoughness: 0.6, ...MAT_OPTS[name as ColorName] })),
             ]),
         ) as Record<ColorName, MaterialHandle>;
         game.ball = world.resource(Meshes).add({ name: "boule", ...sphere(0.5, 24, 12) });
+        game.wedge = world.resource(Meshes).add({ name: "coin", ...wedge() });
+        game.bevel = world.resource(Meshes).add({ name: "bloc biseauté", ...bevelBox() });
 
-        Object.assign(world.resource(GlobalAmbientLight), { color: 0xfff4e6, brightness: 500 });
-        const sun = world.create();
+        // couleurs et intensités : réglées par monde dans applyTheme
+        const sun = (game.sun = world.create());
         world.add(sun, Transform, { rotation: lookAtRotation(0, 0, 0, 0.4, -2, -0.8) });
         world.add(sun, DirectionalLight, { color: 0xffe8cc, illuminance: 5000, shadowMapsEnabled: 1 });
 
         game.camera = world.create();
         world.add(game.camera, StandardRenderer);
 
-        const eye: V3 = [0, 30, 18];
+        // vue plongeante (~70°) : les murs du bas masquent peu les cases derrière eux
+        const eye: V3 = [0, 30, 11];
         world.add(game.camera, Camera, { clearColor: 0x191816, mode: CameraMode.Orthographic, near: -1000, far: 1000, size: 10 });
         world.add(game.camera, Transform, { translation: eye, rotation: lookAtRotation(...eye, 0, 0, 0) });
+        // halo léger autour de ce qui brille (sortie, étincelles)
+        world.add(game.camera, Bloom, { intensity: 0.12 });
         const h = /^#niveau-(\d+)$/.exec(location.hash);
         startLevel(h ? +h[1] - 1 : progress.last); // règle la taille de la vue et construit la scène
         bindInput(document.querySelector("canvas") as HTMLCanvasElement);
@@ -363,7 +596,11 @@ export const PuzzlePlugin: Plugin = {
                     act(game.queue.shift()!);
                     if (game.anim && progress.speed === "aucune") finishAnim();
                 }
+                game.clock += world.time.realDeltaTime;
+                followParts();
                 followEye();
+                updateSparks(world.time.realDeltaTime);
+                pulseExit();
             },
         },
     ],
