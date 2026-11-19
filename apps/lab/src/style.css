@@ -266,3 +266,10 @@
     .ed-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 420px); gap: 16px; align-items: start; }
     .ed-side .card:first-child { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
   }
+  /* Vitre brisée : quelques éclats sur le sol */
+  .tile.shattered::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(35deg, transparent 46%, rgba(120,185,220,.55) 47% 50%, transparent 51%) 18% 70% / 30% 22% no-repeat,
+      linear-gradient(-50deg, transparent 45%, rgba(120,185,220,.5) 46% 50%, transparent 51%) 74% 28% / 26% 24% no-repeat,
+      linear-gradient(80deg, transparent 44%, rgba(120,185,220,.45) 45% 52%, transparent 53%) 62% 78% / 18% 20% no-repeat; }
+  .tile.glass.shatter::after { animation: shatter .15s ease-in forwards; }
+  @keyframes shatter { 40% { transform: scale(1.08); } 100% { transform: scale(.2) rotate(12deg); opacity: 0; } }

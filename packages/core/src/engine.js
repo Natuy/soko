@@ -7,7 +7,7 @@
 //           / \ déflecteur (fixe, fait tourner les ronds de 90°), + interrupteur, D porte
 //           C carré collant, G rond collant, M miroir (téléporteur), I bloc inamovible
 //           = miroir de ligne, ! miroir de colonne, Z miroir à interrupteur, % interrupteur de miroir
-//           T mur transparent (bloque tout, sauf le regard des miroirs)
+//           T mur transparent (bloque tout, sauf le regard des miroirs ; cassant : un rond le brise)
 const DIRS = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
 const TURN = { '/': { right: 'up', up: 'right', left: 'down', down: 'left' }, '\\': { right: 'down', down: 'right', left: 'up', up: 'left' } };
 const ARROW = { up: '^', down: 'v', left: '<', right: '>' };
@@ -15,7 +15,7 @@ const isR = b => !!b && b[0] === 'R';
 const sticky = b => !!b && b.endsWith('*');
 
 function parseLevel(rows) {
-  const st = { h: rows.length, w: Math.max(...rows.map(r => r.length)), walls: new Set(), holes: new Set(), blocks: new Map(), glue: new Set(), player: null, exit: null, defl: new Map(), switches: new Set(), doors: new Set(), open: false, facing: 'right', mirrors: false, plates: new Set(), pressed: new Set(), glass: new Set() };
+  const st = { h: rows.length, w: Math.max(...rows.map(r => r.length)), walls: new Set(), holes: new Set(), blocks: new Map(), glue: new Set(), player: null, exit: null, defl: new Map(), switches: new Set(), doors: new Set(), open: false, facing: 'right', mirrors: false, plates: new Set(), pressed: new Set(), glass: new Set(), shattered: new Set() };
   rows.forEach((row, r) => {
     for (let c = 0; c < st.w; c++) {
       const ch = row[c] || '#', k = r + ',' + c;
@@ -59,7 +59,7 @@ function computeOpen(s, ignore) {
 }
 
 function cloneState(s) {
-  return { ...s, holes: new Set(s.holes), blocks: new Map(s.blocks), glue: new Set(s.glue) };
+  return { ...s, holes: new Set(s.holes), blocks: new Map(s.blocks), glue: new Set(s.glue), glass: new Set(s.glass), shattered: new Set(s.shattered) };
 }
 
 const rcOf = k => k.split(',').map(Number);
@@ -69,6 +69,18 @@ const blocked = (s, k) => { const [r, c] = rcOf(k); return s.glass.has(k) || s.w
 const add = (k, d) => { const [r, c] = rcOf(k); return (r + d[0]) + ',' + (c + d[1]); };
 const edge = (a, b) => a < b ? a + '|' + b : b + '|' + a;
 const NB = Object.values(DIRS);
+
+// ---- Propriété « cassant » ----
+// Un rond qui percute un élément cassant s'arrête devant et le brise. Rien d'autre ne le casse.
+// C'est une propriété, pas un bloc : elle vaut pour le bloc cassant (B) et le mur transparent (T).
+// Pour rendre cassant un autre genre de bloc, il suffit de l'ajouter à BREAKABLE_BLOCKS.
+const BREAKABLE_BLOCKS = new Set(['B']);
+const breakable = (s, k) => s.glass.has(k) || BREAKABLE_BLOCKS.has(s.blocks.get(k));
+// Brise l'élément cassant en k. Une vitre brisée laisse un sol libre (notée dans shattered).
+function shatter(s, k, ev) {
+  if (s.glass.has(k)) { s.glass.delete(k); s.shattered.add(k); ev.push({ type: 'break', at: k, glass: true }); }
+  else { removeBlock(s, k); ev.push({ type: 'break', at: k }); }
+}
 
 // ---- Blocs collés ----
 function grouped(s, k) { return NB.some(d => s.glue.has(edge(k, add(k, d)))); }
@@ -130,13 +142,13 @@ function rollGroup(s, members, dirName, ev) {
     for (const k of mem) {
       const nx = add(k, d); if (set.has(nx)) continue;
       const b = s.blocks.get(nx);
-      if (b === 'B' && !grouped(s, nx)) { breaks.push(nx); stop = true; }
+      if (breakable(s, nx) && !grouped(s, nx)) { breaks.push(nx); stop = true; }
       else if (isR(b) && !grouped(s, nx)) { pends.push(nx); stop = true; }
       else if (blocked(s, nx) || b || s.player === nx) stop = true;
     }
     if (stop) {
       flush();
-      for (const k of breaks) { removeBlock(s, k); ev.push({ type: 'break', at: k }); }
+      for (const k of breaks) shatter(s, k, ev);
       let pm = false;
       for (const k of pends) if (s.blocks.has(k)) pm = roll(s, chainEnd(s, k, d), dirName, ev) || pm;
       return moved || breaks.length > 0 || pm;
@@ -171,7 +183,7 @@ function roll(s, pos, d0, ev) {
   // ce qui se trouve en k pour un rond qui arrive
   const hit = (k, dir) => {
     const bn = s.blocks.get(k);
-    if (bn === 'B') { stopAt(); removeBlock(s, k); ev.push({ type: 'break', at: k }); return true; }
+    if (breakable(s, k)) { stopAt(); shatter(s, k, ev); return true; }
     if (isR(bn) && !grouped(s, k)) { const m = stopAt(); return roll(s, chainEnd(s, k, DIRS[dir]), dir, ev) || m; }
     return null;
   };
@@ -275,9 +287,9 @@ function step(s0, dirName) {
   }
   // Rond
   const bm = s.blocks.get(m);
-  if (bm === 'B' && !grouped(s, m)) {
+  if (breakable(s, m) && !grouped(s, m)) {
     // Rond poussé collé à un cassant : le choc le brise, le joueur ne bouge pas
-    removeBlock(s, m); ev.push({ type: 'break', at: m });
+    shatter(s, m, ev);
     return finish(s, ev, { bump: n });
   }
   if (isR(bm)) {
@@ -375,7 +387,8 @@ function teleport(s0, dirName) {
 const isWin = s => s.player === s.exit;
 
 function stateKey(s) {
-  return s.player + '|' + [...s.blocks].map(([k, v]) => v + k).sort().join(';') + '|' + [...s.holes].sort().join(';') + '|' + [...s.glue].sort().join(';') ;
+  // les vitres brisées ne s'ajoutent à la clé que s'il y en a : les clés des autres états ne changent pas
+  return s.player + '|' + [...s.blocks].map(([k, v]) => v + k).sort().join(';') + '|' + [...s.holes].sort().join(';') + '|' + [...s.glue].sort().join(';') + (s.shattered.size ? '|T' + [...s.shattered].sort().join(';') : '');
 }
 
 
@@ -416,4 +429,7 @@ export {
   teleport,
   isWin,
   stateKey,
+  BREAKABLE_BLOCKS,
+  breakable,
+  shatter,
 };

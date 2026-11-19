@@ -68,5 +68,8 @@
   "Commande à distance": "7,2|I5,6;Mz3,6||",
   "Volet": "3,1|Mz3,5;S1,3||",
   "Vitrine": "6,5|Mz3,5||",
+  "Bris de verre": "1,9||||T1,7",
+  "Deux usages": "4,7||||T2,6",
+  "Place nette": "1,8|M1,5;R2,7|1,4||T1,7",
   "Sous verre": "8,1|I6,5;Mz4,5;R1,7||"
 }

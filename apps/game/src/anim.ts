@@ -96,6 +96,7 @@ export interface PlanCtx {
     cell: (key: string, y: number) => V3; // centre d'une case, à la hauteur y
     restY: (eid: number) => number; // hauteur de repos de l'entité
     scale: (eid: number) => V3; // échelle de repos
+    glassAt: Map<string, number>; // case "r,c" → entité de la vitre intacte. Mise à jour quand une vitre se brise.
 }
 
 // Un bloc tombé dans un trou s'y enfonce jusqu'à affleurer le sol : il devient un pont.
@@ -110,7 +111,7 @@ const dist = (a: string, b: string) => {
 };
 const ZERO: V3 = [0, 0, 0];
 
-type Ev = { type: string; from?: string; to?: string; at?: string; kind?: string; turn?: boolean; mirror?: string; moves?: { from: string; to: string; player?: boolean; fill?: boolean }[] };
+type Ev = { type: string; from?: string; to?: string; at?: string; kind?: string; turn?: boolean; glass?: boolean; mirror?: string; moves?: { from: string; to: string; player?: boolean; fill?: boolean }[] };
 
 // Construit la chronologie d'un coup. Comme dans le lab, les événements s'enchaînent :
 // le joueur et le bloc qu'il pousse partent ensemble, un rond qui roule fait attendre la suite.
@@ -164,7 +165,11 @@ export function plan(events: Ev[], bump: string | undefined, facing: [number, nu
                 break;
             }
             case "break": {
-                const eid = take(e.at!), t0 = free(eid), s = ctx.scale(eid);
+                // bloc cassant ou vitre : même éclatement
+                const g = e.glass ? ctx.glassAt.get(e.at!) : undefined;
+                if (e.glass && g === undefined) break;
+                if (e.glass) ctx.glassAt.delete(e.at!);
+                const eid = e.glass ? g! : take(e.at!), t0 = free(eid), s = ctx.scale(eid);
                 tl.add({ eid, t0, t1: t0 + 0.08, prop: "scale", from: s, to: s.map((x) => x * 1.15) as V3, ease: EASE.out });
                 tl.add({ eid, t0: t0 + 0.08, t1: t0 + 0.2, prop: "scale", from: s.map((x) => x * 1.15) as V3, to: ZERO, ease: EASE.in });
                 busy.set(eid, t0 + 0.2);
