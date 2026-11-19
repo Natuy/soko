@@ -238,3 +238,31 @@
   .tbl tr.busy td { background: rgba(232,178,58,.12); }
   /* six onglets : plus serrés sur les écrans étroits */
   @media (max-width: 480px) { .tabs { gap: 2px; padding: 3px; } .tabs button { flex: 1 1 auto; padding: 7px 3px; font-size: .72rem !important; min-width: 0; } }
+  /* ---- Écrans moyens et grands : la page s'élargit au lieu de rester en colonne de téléphone ---- */
+  @media (min-width: 720px) {
+    main { max-width: 860px; padding: 20px 24px 56px; }
+  }
+  @media (min-width: 960px) {
+    main { max-width: 1240px; padding: 24px 32px 64px; }
+    h1 { font-size: 1.6rem; }
+    .tabs { max-width: 720px; }
+    /* cartes sur deux colonnes : Mécaniques, Principes, Idées */
+    .cards, #mechs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+    .cards > .sub, #mechs > .mw { grid-column: 1 / -1; }
+    .cards > .card, #mechs > .card { margin: 0; }
+    #mechs > .mw { margin: 14px 2px 0; }
+    /* Jouer : navigation et explications à gauche, plateau à droite */
+    .play-grid { display: grid; grid-template-columns: minmax(300px, 370px) minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "nav main" "teach main"; gap: 0 28px; align-items: start; }
+    .play-grid > .play-side:first-child { grid-area: nav; }
+    .play-grid > .play-side:last-child { grid-area: teach; }
+    .play-main { grid-area: main; position: sticky; top: 12px; }
+    .play-side .nav { margin-bottom: 14px; }
+    .play-side .navtog { display: none; }
+    .play-side .lots.closed { display: block; }
+    .head2 h2 { font-size: 1.4rem; }
+    .board-wrap { margin: 14px 0; }
+    .pad { grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 54px); }
+    /* Éditeur : le plan à gauche, résultats et ajustement à droite */
+    .ed-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 420px); gap: 16px; align-items: start; }
+    .ed-side .card:first-child { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+  }

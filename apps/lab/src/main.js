@@ -12,8 +12,11 @@ const isSolved = i => solved.has(LEVELS[i].name);
 
 function tileSize(L) {
   const w = Math.max(...L.map.map(r => r.length)), h = L.map.length;
-  const maxW = Math.min(window.innerWidth - 28, 612), maxH = Math.max(220, window.innerHeight * 0.48);
-  return Math.floor(Math.min(maxW / w, maxH / h, 60));
+  // la place réelle de la colonne du plateau ; sur grand écran, le plateau peut occuper plus de hauteur
+  const wide = window.innerWidth >= 960;
+  // grand écran : la hauteur de la fenêtre moins l'en-tête de page et les contrôles, pour que tout tienne sans défiler
+  const maxW = $('wrap').clientWidth || Math.min(window.innerWidth - 28, 612), maxH = Math.max(220, wide ? window.innerHeight - 420 : window.innerHeight * 0.48);
+  return Math.floor(Math.min(maxW / w, maxH / h, wide ? 76 : 60));
 }
 const rc = k => k.split(',').map(Number);
 
@@ -354,7 +357,8 @@ $('wrap').addEventListener('pointerup', e => {
   if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
   move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
 });
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!history.length) build(); }, 200); });
+// Redimensionnement : on redessine le plan de l'éditeur, et le plateau s'il n'a pas encore été joué
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!history.length && !rp) build(); if (!$('tab-edit').hidden) edRender(true); }, 200); });
 function showTab(name) {
   for (const n of ['play', 'mech', 'princ', 'ideas', 'edit', 'table']) { $('tab-' + n).hidden = n !== name; $('tb-' + n).classList.toggle('on', n === name); }
   if (name !== 'play' && rp) { rp.playing = false; rpUI(); }
@@ -415,7 +419,11 @@ function drawStatic(el, map, T, marks) {
   for (const m of marks || []) { const d = document.createElement('div'); d.className = 'ed-mark' + (m.cls ? ' ' + m.cls : ''); d.title = m.title || ''; d.style.left = m.c * T + 'px'; d.style.top = m.r * T + 'px'; el.appendChild(d); }
 }
 
-const edT = () => { const W = edMap[0].length, H = edMap.length; return Math.floor(Math.min((Math.min(window.innerWidth - 28, 612)) / W, (Math.max(260, window.innerHeight * 0.55)) / H, 46)); };
+const edT = () => {
+  const W = edMap[0].length, H = edMap.length, wide = window.innerWidth >= 960;
+  const maxW = $('ed-board').parentElement.clientWidth || Math.min(window.innerWidth - 28, 612);
+  return Math.floor(Math.min(maxW / W, Math.max(260, window.innerHeight * (wide ? 0.6 : 0.55)) / H, wide ? 58 : 46));
+};
 function edSave() { try { localStorage.setItem('pz-editor', JSON.stringify({ map: edMap })); } catch (e) {} }
 function edRender(keepResults) {
   drawStatic($('ed-board'), edMap, edT(), edMarks);
@@ -486,7 +494,7 @@ function edPaint(r, c) {
   edMap = m; edChanged();
 }
 function edCell(e) {
-  const b = $('ed-board').getBoundingClientRect(), T = edT();
+  const b = $('ed-board').getBoundingClientRect(), T = parseFloat($('ed-board').style.getPropertyValue('--t')) || edT();
   const c = Math.floor((e.clientX - b.left) / T), r = Math.floor((e.clientY - b.top) / T);
   return r >= 0 && c >= 0 && r < edMap.length && c < edMap[0].length ? [r, c] : null;
 }
