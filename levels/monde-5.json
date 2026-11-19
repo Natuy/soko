@@ -179,6 +179,61 @@
       "solution": "DRRUDRRDD"
     },
     {
+      "lot": "La vitre se brise",
+      "stage": "Découverte",
+      "name": "Bris de verre",
+      "map": [
+        "###########",
+        "#P.R...TOE#",
+        "###########"
+      ],
+      "teach": [
+        "Le mur transparent est cassant, comme le bloc cassant : un rond qui le percute s'arrête devant et le brise.",
+        "La case de la vitre devient un sol libre. Le rond, relancé, peut maintenant la traverser."
+      ],
+      "hint": "Pousse le rond une première fois, puis une seconde.",
+      "solution": "RRRRRRRR"
+    },
+    {
+      "lot": "La vitre se brise",
+      "stage": "Approfondissement",
+      "name": "Deux usages",
+      "map": [
+        "#########",
+        "#.......#",
+        "#P.R..T.#",
+        "#.....#O#",
+        "#######E#",
+        "#########"
+      ],
+      "teach": [
+        "Le rond qui brise la vitre ne disparaît pas : il s'arrête devant, et peut encore servir.",
+        "Il faut le relancer à travers la vitre brisée, puis le faire tomber dans le trou depuis le bon côté."
+      ],
+      "hint": "Brise la vitre, relance le rond jusqu'au mur, puis fais le tour par le haut pour le pousser dans le trou.",
+      "solution": "RRRRURRDDD"
+    },
+    {
+      "lot": "La vitre se brise",
+      "stage": "Twist",
+      "name": "Place nette",
+      "map": [
+        "##########",
+        "###.OM#TE#",
+        "#P..###.##",
+        "#.RR...R.#",
+        "#....OO..#",
+        "##########"
+      ],
+      "teach": [
+        "Le miroir voit à travers la vitre, mais la case d'arrivée doit être libre : tant que la vitre est là, il ne t'emmène nulle part.",
+        "Brise-la d'abord avec un rond, par en dessous, puis traverse le miroir pour atterrir à sa place.",
+        "Pour atteindre la colonne du rond, il faut d'abord combler les deux trous du bas."
+      ],
+      "hint": "D'abord : descendre les deux ronds de gauche et les faire rouler dans les trous du bas. Ensuite : pousser le rond de droite vers le haut, puis traverser le miroir depuis la ligne du haut.",
+      "solution": "RDURDLLDRRRRRRRULLLLUU*R"
+    },
+    {
       "lot": "Finale du monde",
       "stage": "",
       "name": "Sous verre",

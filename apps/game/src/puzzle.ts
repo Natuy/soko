@@ -133,6 +133,7 @@ const game = {
     spawned: [] as number[],
     rest: new Map<number, { t: V3; s: V3 }>(), // position et échelle de repos de chaque entité
     idAt: new Map<string, number>(), // case → bloc, "player" → joueur
+    glassAt: new Map<string, number>(), // case → vitre intacte (une vitre se brise sous le choc d'un rond)
     doors: [] as number[],
     eye: -1,
     anim: null as Timeline | null,
@@ -437,6 +438,7 @@ function rebuild(intro: boolean): void {
     game.sparks = [];
     game.rest.clear();
     game.idAt.clear();
+    game.glassAt.clear();
     game.doors = [];
 
     for (let r = 0; r < s.h; r++) for (let c = 0; c < s.w; c++) {
@@ -449,7 +451,7 @@ function rebuild(intro: boolean): void {
         if (s.holes.has(k)) { putPit(k); continue; }
         if (k === s.exit) putExit(k);
         else put(k, game.holes0.has(k) ? "filled" : floorShade(r, c), -0.1, [0.96, 0.2, 0.96]);
-        if (s.glass.has(k)) put(k, "glass", 0.4, [0.9, 0.8, 0.2]);
+        if (s.glass.has(k)) game.glassAt.set(k, put(k, "glass", 0.4, [0.9, 0.8, 0.2]));
         if (s.switches.has(k)) put(k, "teal", 0.02, [0.5, 0.04, 0.5]);
         if (s.plates.has(k)) put(k, "teal", 0.02, [0.45, 0.04, 0.45], { yaw: Math.PI / 4 });
         if (s.doors.has(k)) {
@@ -534,6 +536,7 @@ function play(m: Move): void {
         cell: cellOf,
         restY: (eid) => game.rest.get(eid)!.t[1],
         scale: (eid) => game.rest.get(eid)!.s,
+        glassAt: game.glassAt,
     });
     // portes : elles s'ouvrent ou se ferment pendant le coup
     if (before.open !== game.state.open) {
@@ -568,7 +571,8 @@ function finishAnim(): void {
     game.anim = null;
     // filet de sécurité : si la scène ne correspond plus à l'état, on la reconstruit
     const blocks = game.state.blocks as Map<string, string>;
-    if (blocks.size !== game.idAt.size - 1 || [...blocks.keys()].some((k) => !game.idAt.has(k))) rebuild(false);
+    const glass = game.state.glass as Set<string>;
+    if (blocks.size !== game.idAt.size - 1 || [...blocks.keys()].some((k) => !game.idAt.has(k)) || glass.size !== game.glassAt.size) rebuild(false);
     else syncGlue(true);
     if (isWin(game.state) && !game.won) celebrate();
 }

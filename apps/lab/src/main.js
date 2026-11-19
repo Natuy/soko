@@ -27,15 +27,16 @@ function build(init) {
   $('testbar').hidden = !testLevel;
   state = init || parseLevel(L.map); history = []; pending = [];
   ents = new Map(); idAt = new Map(); nextId = 0;
-  const holes0 = init ? parseLevel(L.map).holes : null; // trous déjà comblés avant l'état de départ
+  const s0 = init ? parseLevel(L.map) : null, holes0 = s0 && s0.holes; // trous déjà comblés avant l'état de départ
   const T = tileSize(L), b = $('board');
   b.innerHTML = ''; b.style.setProperty('--t', T + 'px');
   b.classList.toggle('mir', state.mirrors); document.body.classList.toggle('mirmode', state.mirrors);
   b.style.width = state.w * T + 'px'; b.style.height = state.h * T + 'px';
   for (let r = 0; r < state.h; r++) for (let c = 0; c < state.w; c++) {
     const k = r + ',' + c, d = document.createElement('div');
-    d.className = 'tile ' + (state.glass.has(k) ? 'glass' : state.walls.has(k) ? 'wall' : state.holes.has(k) || (holes0 && holes0.has(k)) ? 'hole' + (state.holes.has(k) ? '' : ' filled') : state.defl.has(k) ? 'defl ' + (state.defl.get(k) === '/' ? 's' : 'b') : state.doors.has(k) ? 'door' : 'floor' + ((r + c) % 2 ? ' alt' : '') + (state.switches.has(k) ? ' switch' : '') + (state.plates.has(k) ? ' plate' : ''));
+    d.className = 'tile ' + (state.shattered.has(k) ? 'floor shattered' : state.glass.has(k) ? 'glass' : state.walls.has(k) ? 'wall' : state.holes.has(k) || (holes0 && holes0.has(k)) ? 'hole' + (state.holes.has(k) ? '' : ' filled') : state.defl.has(k) ? 'defl ' + (state.defl.get(k) === '/' ? 's' : 'b') : state.doors.has(k) ? 'door' : 'floor' + ((r + c) % 2 ? ' alt' : '') + (state.switches.has(k) ? ' switch' : '') + (state.plates.has(k) ? ' plate' : ''));
     d.dataset.k = k; d.style.left = c * T + 'px'; d.style.top = r * T + 'px';
+    if (state.glass.has(k) || state.shattered.has(k)) d.dataset.glass = '1'; // vitre cassable : son aspect suit l'état
     b.appendChild(d);
   }
   const ex = document.createElement('div'); ex.className = 'exit-mark'; ex.id = 'exit';
@@ -84,6 +85,7 @@ async function animate(events, bump) {
   if (bump !== undefined) { const el = ents.get(idAt.get(bump)); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
   for (const e of events) {
     if (e.type === 'player') { place(ents.get(idAt.get('player')), e.to, 1); continue; }
+    if (e.type === 'break' && e.glass) { const t = document.querySelector(`#board .tile[data-k="${e.at}"]`); t.classList.add('shatter'); await wait(150); t.classList.remove('shatter'); syncGlass(); continue; }
     if (e.type === 'break') { const bid = idAt.get(e.at); idAt.delete(e.at); ents.get(bid).classList.add('broken'); await wait(120); continue; }
     if (e.type === 'vanish') { const vid = idAt.get(e.at); idAt.delete(e.at); ents.get(vid).classList.add('gone'); document.querySelector(`.tile[data-k="${e.at}"]`).classList.add('filled'); continue; }
     if (e.type === 'multi') {
@@ -175,6 +177,13 @@ function undo(fromRp) {
   $('win').classList.remove('on'); updateMeta();
 }
 
+// Les vitres brisées deviennent du sol (et reviennent après une annulation)
+function syncGlass() {
+  document.querySelectorAll('#board .tile[data-glass]').forEach(t => {
+    const intact = state.glass.has(t.dataset.k);
+    t.classList.toggle('glass', intact); t.classList.toggle('floor', !intact); t.classList.toggle('shattered', !intact);
+  });
+}
 function clearGhosts() { document.querySelectorAll('.ghost').forEach(g => g.remove()); }
 function updateMeta() {
   const T = parseFloat($('board').style.getPropertyValue('--t')), b = $('board');
@@ -197,6 +206,7 @@ function updateMeta() {
   }
   $('moves').textContent = rp ? rp.i + ' / ' + rp.sol.length : history.length + ' coup' + (history.length > 1 ? 's' : '');
   $('exit').classList.toggle('covered', state.blocks.has(state.exit));
+  syncGlass();
   document.querySelectorAll('.door').forEach(t => t.classList.toggle('open', state.open));
   document.querySelectorAll('.switch, .plate').forEach(t => t.classList.toggle('on', state.player === t.dataset.k || state.blocks.has(t.dataset.k)));
 }
@@ -249,7 +259,7 @@ const MECHS = [
     permet: ['Des choix irréversibles : impossible de le ramener.', 'Des pièges : mal poussé, il bouche un couloir pour toujours.', "Imposer une rangée ou une colonne, et une butée qu'on ne place que dans un sens."],
     levels: ['Face plate', 'Le mauvais demi', 'La rangée imposée', 'Trois sens', 'Butée à sens unique', 'Le choc suffit', 'Atelier'] },
   { w: 1, name: 'Le bloc cassant', sw: 'cassant',
-    regle: ['Se pousse comme un carré et peut boucher un trou.', "Un rond qui le percute s'arrête devant et le brise, même collé à lui si on le pousse. Rien d'autre ne le casse."],
+    regle: ['Se pousse comme un carré et peut boucher un trou.', "Un rond qui le percute s'arrête devant et le brise, même collé à lui si on le pousse. Rien d'autre ne le casse.", "Cette propriété cassante n'est pas réservée à ce bloc : le mur transparent l'a aussi (monde 5)."],
     permet: ['Une butée à usage unique.', 'Un verrou impossible à déplacer sans tout bloquer, à briser de loin.', 'Libérer un bloc qui lui est collé.'],
     levels: ['Une seule fois', 'Le verrou', 'Coup de billard', 'Pont ou butée', 'Le choc suffit', 'Atelier', 'Détacher'] },
   { w: 2, name: 'Le bloc collant', sw: 'colle',
@@ -269,9 +279,9 @@ const MECHS = [
     permet: ['Choisir exactement dans quel sens un miroir agit.', "Emporter un miroir de l'autre côté d'un mur pour s'en servir ensuite.", "Des croisements où deux miroirs s'annulent et où il faut en écarter un."],
     levels: ['Ligne ou colonne', 'Miroir en bagage', 'Croisement'] },
   { w: 3, name: 'Le mur transparent', sw: 'vitre',
-    regle: ['Arrête le joueur, les blocs poussés et les ronds, comme un mur.', "Ne bloque pas le regard des miroirs : le faisceau du bouton d'action et celui du miroir à interrupteur le traversent."],
-    permet: ["Mettre un bloc ou un miroir hors d'atteinte, tout en le laissant visible.", 'Téléporter à travers une vitre ce que le joueur ne peut pas toucher.', "Des pièges : un miroir derrière une vitre rend une case ambiguë."],
-    levels: ['Vitre', 'Prisonnier', 'Trop de reflets', 'Aller-retour', 'Deux pressions', 'Vitrine', 'Sous verre'] },
+    regle: ['Arrête le joueur et les blocs poussés, comme un mur.', "Ne bloque pas le regard des miroirs : le faisceau du bouton d'action et celui du miroir à interrupteur le traversent.", "Il est cassant, comme le bloc cassant : un rond qui le percute s'arrête devant et le brise. La case devient un sol libre. Rien d'autre ne le casse."],
+    permet: ["Mettre un bloc ou un miroir hors d'atteinte, tout en le laissant visible.", 'Téléporter à travers une vitre ce que le joueur ne peut pas toucher.', "Des pièges : un miroir derrière une vitre rend une case ambiguë.", "Un passage qu'un rond peut ouvrir, et une butée à usage unique (monde 5)."],
+    levels: ['Vitre', 'Prisonnier', 'Trop de reflets', 'Aller-retour', 'Deux pressions', 'Vitrine', 'Bris de verre', 'Deux usages', 'Place nette', 'Sous verre'] },
   { w: 3, name: 'Le bloc inamovible', sw: 'inam',
     regle: ['Ne se pousse dans aucune direction.', 'Seule la téléportation peut le déplacer.'],
     permet: ['Amener un bloc sur un interrupteur ou dans un trou sans jamais le pousser.'],
