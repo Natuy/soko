@@ -106,6 +106,8 @@ const AN = (function () {
     if (ex.unsolvable) return { unsolvable: true, total: ex.total };
     const dec = choices(ex);
     const strong = dec.filter(([o, v]) => o >= 3 && v < o).length, weak = dec.filter(([o, v]) => o >= 2 && v < o).length;
+    // exploration : gestes qu'on peut défaire (ils ne sont pas des choix, mais laissent le joueur essayer)
+    const gestures = dec.reduce((a, d) => a + d[3] - d[0], 0), exploreMoments = dec.filter(d => d[3] > d[0]).length;
     const useless = []; let n = 0;
     const blocks = []; map.forEach((row, r) => [...row].forEach((ch, c) => { if (BLOCKCH.has(ch)) blocks.push([r, c, ch]); }));
     for (const [r, c, ch] of blocks) { post('Utilité des blocs : ' + (++n) + ' / ' + blocks.length); if (solvable(setCell(map, r, c, '.'), 80000)) useless.push({ r, c, ch, name: NAMES[ch] }); }
@@ -117,7 +119,7 @@ const AN = (function () {
     }
     post('Zones superflues…');
     const sup = superfluous(map, { strong, weak, total: ex.total, st: ex.st, path: ex.path }, post);
-    return { sol: ex.sol, len: ex.sol.length, total: ex.total, dead: ex.dead, dec, strong, weak, useless, notEss, zones: sup.zones, minorCells: sup.minor, trimmed: sup.trimmed };
+    return { sol: ex.sol, len: ex.sol.length, total: ex.total, dead: ex.dead, dec, strong, weak, explore: gestures, exploreMoments, useless, notEss, zones: sup.zones, minorCells: sup.minor, trimmed: sup.trimmed };
   }
 
   // Zones superflues : cases (sol ou trou) qu'on peut murer sans rendre le niveau impossible ni perdre de choix.

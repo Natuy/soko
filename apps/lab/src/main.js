@@ -578,7 +578,7 @@ async function edEval() {
   edMarks = r.useless.map(u => ({ r: u.r, c: u.c, title: 'Bloc inutile' })).concat(r.zones.flatMap(z => z.cells.map(p => ({ r: p.r, c: p.c, title: 'Impasse superflue', cls: 'zone' }))));
   drawStatic($('ed-board'), edMap, edT(), edMarks);
   box.innerHTML = '<h3>Évaluation</h3>' +
-    '<div class="ed-kpis"><div><b>' + r.len + '</b><span>coups</span></div><div class="' + (ok ? 'good' : 'warn') + '"><b>' + r.strong + '</b><span>choix forts</span></div><div><b>' + r.weak + '</b><span>choix faibles</span></div><div><b>' + pct + ' %</b><span>états sans issue</span></div></div>' +
+    '<div class="ed-kpis"><div><b>' + r.len + '</b><span>coups</span></div><div class="' + (ok ? 'good' : 'warn') + '"><b>' + r.strong + '</b><span>choix forts</span></div><div><b>' + r.weak + '</b><span>choix faibles</span></div><div title="gestes qu\'on peut défaire, sur ' + r.exploreMoments + ' moment' + (r.exploreMoments > 1 ? 's' : '') + ' de la solution"><b>' + r.explore + '</b><span>exploration</span></div><div><b>' + pct + ' %</b><span>états sans issue</span></div></div>' +
     '<p class="ed-note">' + (r.strong >= 3 ? 'Assez de choix pour une finale (objectif ≥ 3).' : r.strong >= 2 ? 'Assez de choix pour un approfondissement ou un twist (objectif ≥ 2), pas encore pour une finale (≥ 3).' : 'Pas assez de vrais choix, sauf pour un niveau de découverte (objectif ≥ 2, ou ≥ 3 pour une finale).') + '</p>' +
     '<p><b>Moments de décision</b> le long de la solution (gestes encore gagnants / gestes irréversibles) :<br>' + (chips || '—') + '</p>' +
     '<p><b>Blocs inutiles</b> : ' + (r.useless.length ? r.useless.map(u => u.name + ' (ligne ' + (u.r + 1) + ', colonne ' + (u.c + 1) + ')').join(', ') + '. Ils sont entourés en rouge sur le plan : sans eux, le niveau reste résoluble.' : 'aucun, chaque bloc est nécessaire.') + '</p>' +
@@ -586,7 +586,7 @@ async function edEval() {
     '<p><b>Mécaniques non indispensables</b> : ' + (r.notEss.length ? r.notEss.map(n => n.name + ' → ' + n.toName).join(', ') + ' : le niveau reste résoluble avec ce remplacement.' : 'aucune, chaque mécanique présente est nécessaire.') + '</p>' +
     '<p>États explorés : ' + r.total + ', dont ' + r.dead + ' sans issue.</p>' +
     '<p>' + solHtml([...r.sol].map(ch => ARROWS[ch]).join('')) + ' <button class="ed-btn" id="ed-replay">▶ Voir la solution</button></p>' +
-    '<details><summary>Comment lire ces mesures</summary><p>Le long de la solution la plus courte, à chaque nouvelle disposition des blocs, on compte les gestes irréversibles (pousser un bloc, se téléporter, sans pouvoir revenir ensuite à la même disposition ; marcher et les gestes qu\'on peut défaire ne comptent pas) et ceux qui laissent le niveau gagnable.</p><p><b>Choix fort</b> : au moins 3 gestes irréversibles, dont au moins un perdant. <b>Choix faible</b> : au moins 2 gestes irréversibles, dont au moins un perdant.</p><p><b>Bloc inutile</b> : le retirer laisse le niveau résoluble. Un bloc qui sert d\'alternative crédible au bon bloc peut rester. <b>Mécanique non indispensable</b> : la remplacer (par exemple un rond par un carré) laisse le niveau résoluble.</p><p><b>Impasse superflue</b> : un groupe de cases (sol ou trou) relié au reste du plan par un seul côté, que la solution la plus courte ne traverse pas, et qu\'on peut transformer en mur sans rendre le niveau impossible et sans perdre de choix forts ou faibles. Les autres cases sans utilité (marge d\'une salle, par exemple) ne sont pas signalées.</p></details>';
+    '<details><summary>Comment lire ces mesures</summary><p>Le long de la solution la plus courte, à chaque nouvelle disposition des blocs, on compte les gestes irréversibles (pousser un bloc, se téléporter, sans pouvoir revenir ensuite à la même disposition ; marcher et les gestes qu\'on peut défaire ne comptent pas) et ceux qui laissent le niveau gagnable.</p><p><b>Exploration</b> : les gestes qu\'on peut défaire, additionnés sur tous les moments de la solution. Ce ne sont pas des choix, mais ils laissent le joueur essayer et observer sans tout perdre : un niveau sans exploration peut sembler moins vivant.</p><p><b>Choix fort</b> : au moins 3 gestes irréversibles, dont au moins un perdant. <b>Choix faible</b> : au moins 2 gestes irréversibles, dont au moins un perdant.</p><p><b>Bloc inutile</b> : le retirer laisse le niveau résoluble. Un bloc qui sert d\'alternative crédible au bon bloc peut rester. <b>Mécanique non indispensable</b> : la remplacer (par exemple un rond par un carré) laisse le niveau résoluble.</p><p><b>Impasse superflue</b> : un groupe de cases (sol ou trou) relié au reste du plan par un seul côté, que la solution la plus courte ne traverse pas, et qu\'on peut transformer en mur sans rendre le niveau impossible et sans perdre de choix forts ou faibles. Les autres cases sans utilité (marge d\'une salle, par exemple) ne sont pas signalées.</p></details>';
   $('ed-replay').onclick = () => edReplay(edLast.map, edLast.sol);
   if (r.zones.length) $('ed-trim').onclick = () => { let m = edMap; for (const z of r.zones) for (const p of z.cells) m = setCh(m, p.r, p.c, '#'); edSet(m); };
 }
@@ -631,15 +631,17 @@ function rpStart(sol) {
   let dec = [];
   // la solution de l'évaluation porte les moments de décision : on la préfère si elle est aussi courte
   if (ev && ev.sol !== undefined && ev.sol.length <= sol.length) { sol = ev.sol; dec = ev.dec || []; }
-  rp = { map: L.map.slice(), sol, i: 0, playing: false, dec: new Map(dec.filter(d => decCls(d[0], d[1])).map(d => [d[2], { cls: decCls(d[0], d[1]), o: d[0], v: d[1] }])), evaluated: !!ev };
+  rp = { map: L.map.slice(), sol, i: 0, playing: false, dec: new Map(dec.filter(d => decCls(d[0], d[1])).map(d => [d[2], { cls: decCls(d[0], d[1]), o: d[0], v: d[1] }])), evaluated: !!ev,
+    explo: new Map(dec.filter(d => d[3] > d[0]).map(d => [d[2], d[3] - d[0]])) }; // coups où des gestes peuvent être essayés puis défaits
   const tl = $('rptl'); tl.innerHTML = '';
   [...sol].forEach((ch, j) => {
     const b = document.createElement('button'), d = rp.dec.get(j);
     b.textContent = ARROWS[ch]; if (d) b.classList.add(d.cls);
-    b.title = 'Se placer avant le coup ' + (j + 1) + (d ? ' · choix ' + d.cls + ' : ' + d.v + ' geste' + (d.v > 1 ? 's' : '') + ' gagnant' + (d.v > 1 ? 's' : '') + ' sur ' + d.o : '');
+    const x = rp.explo.get(j); if (x) b.classList.add('explo');
+    b.title = 'Se placer avant le coup ' + (j + 1) + (d ? ' · choix ' + d.cls + ' : ' + d.v + ' geste' + (d.v > 1 ? 's' : '') + ' gagnant' + (d.v > 1 ? 's' : '') + ' sur ' + d.o : '') + (x ? ' · ' + x + ' geste' + (x > 1 ? 's' : '') + ' à essayer puis défaire' : '');
     b.onclick = () => rpJump(j); tl.appendChild(b);
   });
-  $('rpleg').innerHTML = rp.dec.size ? 'Soulignés, les moments de décision :<i style="background:var(--player)"></i>choix fort<i style="background:#e0a640"></i>choix faible. Clique un coup pour te placer juste avant.'
+  $('rpleg').innerHTML = rp.dec.size || rp.explo.size ? 'Soulignés, les moments de décision :<i style="background:var(--player)"></i>choix fort<i style="background:#e0a640"></i>choix faible. Point bleu : on peut y explorer (gestes à défaire). Clique un coup pour te placer juste avant.'
     : 'Clique un coup pour te placer juste avant.' + (rp.evaluated ? ' Aucun vrai choix le long de cette solution.' : ' Évalue le niveau (éditeur ou onglet Tableau) pour voir les moments de décision.');
   rpUI();
 }
@@ -755,7 +757,7 @@ $('solbtn').onclick = () => { const L = LEVELS[cur]; if (!L.solution) return; bu
 // tblWorld : indice du monde affiché, ou -1 pour tous les mondes. Tri et filtres ne changent que l'affichage.
 let tblWorld = 0, tblW = null, tblQueue = [], tblCur = -1, tblSort = { key: 'n', dir: 1 };
 const TBL_COLS = [ // clé de tri, titre, sens du premier clic (1 croissant, -1 décroissant)
-  ['n', '#', 1], ['name', 'Niveau', 1], ['len', 'Coups', -1], ['strong', 'Forts', 1], ['weak', 'Faibles', 1], ['dead', 'Sans issue', -1], ['alerts', 'Alertes', -1],
+  ['n', '#', 1], ['name', 'Niveau', 1], ['len', 'Coups', -1], ['strong', 'Forts', 1], ['weak', 'Faibles', 1], ['explore', 'Explo.', 1], ['dead', 'Sans issue', -1], ['alerts', 'Alertes', -1],
 ];
 const tblStage = L => /finale/i.test(L.lot) ? 'Finale' : L.stage || 'Autre';
 // Mesures et alertes d'un niveau, d'après son évaluation (r), si elle a été faite
@@ -771,7 +773,7 @@ function tblInfo(L, i) {
   // une alerte par mécanique (les quatre orientations du demi-carré n'en font qu'une)
   for (const n of r.notEss.filter((n, k, all) => all.findIndex(m => m.name === n.name) === k)) info.alerts.push({ txt: n.name + ' non indispensable', title: 'remplacer par ' + n.toName + ' laisse le niveau résoluble' });
   if (r.zones.length) info.alerts.push({ txt: 'impasse ×' + r.zones.length });
-  return { ...info, status: 'ok', few, len: r.len, strong: r.strong, weak: r.weak, dead: Math.round(100 * r.dead / r.total) };
+  return { ...info, status: 'ok', few, len: r.len, strong: r.strong, weak: r.weak, explore: r.explore, exploreMoments: r.exploreMoments, dead: Math.round(100 * r.dead / r.total) };
 }
 function tblRows() {
   const f = $('tbl-filter').value, st = $('tbl-stage').value;
@@ -792,14 +794,14 @@ function tblRender() {
     wEl.appendChild(b);
   });
   const { rows, scope } = tblRows(), byOrder = tblSort.key === 'n' && tblSort.dir === 1, t = $('tbl');
-  let html = '<thead><tr>' + TBL_COLS.map(([k, label]) => '<th class="sort' + (['len', 'strong', 'weak', 'dead'].includes(k) ? ' n' : '') + (tblSort.key === k ? ' on' : '') + '" data-sort="' + k + '" title="Trier par ' + label.toLowerCase() + '">' + label + (tblSort.key === k ? (tblSort.dir > 0 ? ' ▲' : ' ▼') : '') + '</th>').join('') + '<th></th></tr></thead><tbody>';
+  let html = '<thead><tr>' + TBL_COLS.map(([k, label]) => '<th class="sort' + (['len', 'strong', 'weak', 'explore', 'dead'].includes(k) ? ' n' : '') + (tblSort.key === k ? ' on' : '') + '" data-sort="' + k + '" title="Trier par ' + label.toLowerCase() + '">' + label + (tblSort.key === k ? (tblSort.dir > 0 ? ' ▲' : ' ▼') : '') + '</th>').join('') + '<th></th></tr></thead><tbody>';
   let lot = null;
   for (const x of rows) {
     const { L, i } = x, first = byOrder && (L.world + L.lot) !== lot; lot = L.world + L.lot;
     html += '<tr class="' + (first ? 'lot' : '') + (i === tblCur ? ' busy' : '') + '"><td>' + (i + 1) + '</td><td><b>' + L.name + '</b><small>' + (tblWorld < 0 ? L.world.split(' · ')[0] + ' · ' : '') + L.lot + (L.stage ? ' · ' + L.stage : '') + '</small></td>' + tblCells(x) +
       '<td class="act"><button data-play="' + i + '">Jouer</button><button data-edit="' + i + '" title="Ouvrir dans l\'éditeur">Éditer</button></td></tr>';
   }
-  if (!rows.length) html += '<tr><td colspan="8" class="pend">Aucun niveau ne correspond aux filtres.</td></tr>';
+  if (!rows.length) html += '<tr><td colspan="9" class="pend">Aucun niveau ne correspond aux filtres.</td></tr>';
   t.innerHTML = html + '</tbody>';
   t.querySelectorAll('[data-sort]').forEach(th => th.onclick = () => {
     const k = th.dataset.sort, col = TBL_COLS.find(c => c[0] === k);
@@ -815,10 +817,10 @@ function tblRender() {
 }
 function tblCells(x) {
   const { L, r } = x;
-  if (x.status === 'pending') return '<td class="n pend">' + (L.solution ? L.solution.length : '—') + '</td><td class="n pend">…</td><td class="n pend">…</td><td class="n pend">…</td><td class="pend">' + (x.i === tblCur ? 'calcul…' : '') + '</td>';
+  if (x.status === 'pending') return '<td class="n pend">' + (L.solution ? L.solution.length : '—') + '</td><td class="n pend">…</td><td class="n pend">…</td><td class="n pend">…</td><td class="n pend">…</td><td class="pend">' + (x.i === tblCur ? 'calcul…' : '') + '</td>';
   const als = x.alerts.map(a => '<span class="al' + (a.red ? ' red' : '') + '"' + (a.title ? ' title="' + a.title + '"' : '') + '>' + a.txt + '</span>').join('');
-  if (x.status === 'error') return '<td colspan="4" class="pend">—</td><td>' + als + '</td>';
-  return '<td class="n">' + x.len + '</td><td class="n ' + (x.few ? 'warn' : x.strong >= 3 ? 'good' : '') + '">' + x.strong + '</td><td class="n">' + x.weak + '</td><td class="n">' + x.dead + ' %</td><td>' + (als || '<span class="ok">✓</span>') + '</td>';
+  if (x.status === 'error') return '<td colspan="5" class="pend">—</td><td>' + als + '</td>';
+  return '<td class="n">' + x.len + '</td><td class="n ' + (x.few ? 'warn' : x.strong >= 3 ? 'good' : '') + '">' + x.strong + '</td><td class="n">' + x.weak + '</td><td class="n' + (x.explore ? '' : ' muted') + '" title="' + x.exploreMoments + ' moment' + (x.exploreMoments > 1 ? 's' : '') + ' avec des gestes à défaire">' + x.explore + '</td><td class="n">' + x.dead + ' %</td><td>' + (als || '<span class="ok">✓</span>') + '</td>';
 }
 function tblStart(all) {
   tblQueue = LEVELS.map((L, i) => i).filter(i => (all || LEVELS[i].world === WORLDS[tblWorld]) && !evalCache.has(mapKey(LEVELS[i].map)));
