@@ -142,20 +142,20 @@
       "stage": "Découverte",
       "name": "Volet",
       "map": [
-        "##########",
-        "##.+.#####",
-        "##.S.#####",
-        "#EO..Z.DS#",
-        "##...#####",
-        "##P%.#####",
-        "##########"
+        "############",
+        "####.#######",
+        "####+#######",
+        "####S#######",
+        "#EO.P#Z.D.S#",
+        "####%#######",
+        "############"
       ],
       "teach": [
         "Une porte fermée bloque le regard du miroir à interrupteur, comme un mur. Ouverte, elle le laisse voir.",
-        "Il faut ouvrir la porte avant de déclencher le miroir, pour qu'il voie le carré caché derrière."
+        "Il faut ouvrir la porte avant de déclencher le miroir, pour qu'il voie le carré caché derrière et l'envoie boucher le trou."
       ],
       "hint": "Pousse le carré sur l'interrupteur de la porte, puis marche sur le losange.",
-      "solution": "URUUDDDUULL"
+      "solution": "UDDULLL"
     },
     {
       "lot": "Ce que voit le miroir",
