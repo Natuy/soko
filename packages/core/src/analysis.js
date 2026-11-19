@@ -4,7 +4,7 @@ const AN = (function () {
   const DIRS4 = ['up', 'down', 'left', 'right'];
   const LETTER = { up: 'U', down: 'D', left: 'L', right: 'R' };
   const BLOCKCH = new Set(['S', 'R', 'B', 'C', 'G', 'M', 'I', '=', '!', 'Z', '^', 'v', '<', '>']);
-  const REPL = [['R', 'S'], ['S', 'R'], ['B', 'S'], ['C', 'S'], ['G', 'R'], ['/', '#'], ['\\', '#'], ['+', '.'], ['D', '.'], ['M', '#'], ['=', 'M'], ['!', 'M'], ['Z', '#'], ['T', '#'], ['I', 'S'], ['%', '.'], ['^', 'S'], ['v', 'S'], ['<', 'S'], ['>', 'S']];
+  const REPL = [['R', 'S'], ['S', 'R'], ['B', 'S'], ['C', 'S'], ['G', 'R'], ['/', '#'], ['\\', '#'], ['+', '.'], ['D', '#'], ['M', '#'], ['=', 'M'], ['!', 'M'], ['Z', '#'], ['T', '#'], ['I', 'S'], ['%', '.'], ['^', 'S'], ['v', 'S'], ['<', 'S'], ['>', 'S']];
   const NAMES = { S: 'carré', R: 'rond', B: 'cassant', C: 'carré collant', G: 'rond collant', M: 'miroir', I: 'inamovible', '=': 'miroir de ligne', '!': 'miroir de colonne', Z: 'miroir à interrupteur', '^': 'demi-carré', v: 'demi-carré', '<': 'demi-carré', '>': 'demi-carré', '/': 'déflecteur', '\\': 'déflecteur', '+': 'interrupteur', D: 'porte', T: 'vitre', '%': 'interrupteur de miroir' };
 
   function succ(s) {

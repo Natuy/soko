@@ -752,40 +752,73 @@ $('rp-quit').onclick = () => { rpEnd(); build(); };
 $('solbtn').onclick = () => { const L = LEVELS[cur]; if (!L.solution) return; build(); rpStart(L.solution); $('rpbar').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
 
 // ---- Onglet « Tableau » : les mesures de l'évaluation pour tous les niveaux d'un monde ----
-let tblWorld = 0, tblW = null, tblQueue = [], tblCur = -1;
+// tblWorld : indice du monde affiché, ou -1 pour tous les mondes. Tri et filtres ne changent que l'affichage.
+let tblWorld = 0, tblW = null, tblQueue = [], tblCur = -1, tblSort = { key: 'n', dir: 1 };
+const TBL_COLS = [ // clé de tri, titre, sens du premier clic (1 croissant, -1 décroissant)
+  ['n', '#', 1], ['name', 'Niveau', 1], ['len', 'Coups', -1], ['strong', 'Forts', 1], ['weak', 'Faibles', 1], ['dead', 'Sans issue', -1], ['alerts', 'Alertes', -1],
+];
+const tblStage = L => /finale/i.test(L.lot) ? 'Finale' : L.stage || 'Autre';
+// Mesures et alertes d'un niveau, d'après son évaluation (r), si elle a été faite
+function tblInfo(L, i) {
+  const r = evalCache.get(mapKey(L.map)), info = { L, i, r, stage: tblStage(L), alerts: [] };
+  if (!r) return { ...info, status: 'pending' };
+  if (r.errors || r.unsolvable || r.over) return { ...info, status: 'error', alerts: [{ red: true, txt: r.errors ? r.errors.join(' ') : r.unsolvable ? 'impossible' : 'trop d\'états' }] };
+  // objectifs des Principes : ≥ 2 choix forts hors découverte, ≥ 3 pour une finale
+  const finale = info.stage === 'Finale', discovery = !finale && (!L.stage || L.stage === 'Découverte');
+  const few = !discovery && r.strong < (finale ? 3 : 2);
+  if (few) info.alerts.push({ red: true, txt: 'peu de choix' + (finale ? ' pour une finale' : '') });
+  if (r.useless.length) info.alerts.push({ red: true, txt: 'bloc inutile ×' + r.useless.length, title: r.useless.map(u => u.name + ' (l. ' + (u.r + 1) + ', c. ' + (u.c + 1) + ')').join(', ') });
+  // une alerte par mécanique (les quatre orientations du demi-carré n'en font qu'une)
+  for (const n of r.notEss.filter((n, k, all) => all.findIndex(m => m.name === n.name) === k)) info.alerts.push({ txt: n.name + ' non indispensable', title: 'remplacer par ' + n.toName + ' laisse le niveau résoluble' });
+  if (r.zones.length) info.alerts.push({ txt: 'impasse ×' + r.zones.length });
+  return { ...info, status: 'ok', few, len: r.len, strong: r.strong, weak: r.weak, dead: Math.round(100 * r.dead / r.total) };
+}
+function tblRows() {
+  const f = $('tbl-filter').value, st = $('tbl-stage').value;
+  let rows = LEVELS.map((L, i) => (tblWorld < 0 || L.world === WORLDS[tblWorld]) ? tblInfo(L, i) : null).filter(Boolean);
+  const scope = rows.length;
+  rows = rows.filter(x => (!st || x.stage === st) && (f === 'all' || (f === 'alerts' ? x.alerts.length > 0 : f === 'clean' ? x.status === 'ok' && !x.alerts.length : x.status === 'pending')));
+  const { key, dir } = tblSort;
+  const val = x => key === 'n' ? x.i : key === 'name' ? x.L.name : key === 'alerts' ? (x.status === 'pending' ? null : x.alerts.length) : x.status === 'ok' ? x[key] : null;
+  // les niveaux pas encore évalués restent en bas, quel que soit le sens
+  rows.sort((a, b) => { const va = val(a), vb = val(b); if (va === null || vb === null) return va === vb ? a.i - b.i : va === null ? 1 : -1; return (typeof va === 'string' ? va.localeCompare(vb, 'fr') : va - vb) * dir || a.i - b.i; });
+  return { rows, scope };
+}
 function tblRender() {
   const wEl = $('tbl-worlds'); wEl.innerHTML = '';
-  WORLDS.forEach((w, wi) => {
-    const b = document.createElement('button'); b.textContent = 'Monde ' + (wi + 1); b.title = w;
+  [[-1, 'Tous les mondes', 'Tous les niveaux du jeu'], ...WORLDS.map((w, wi) => [wi, 'Monde ' + (wi + 1), w])].forEach(([wi, label, title]) => {
+    const b = document.createElement('button'); b.textContent = label; b.title = title;
     b.className = wi === tblWorld ? 'on' : ''; b.onclick = () => { tblWorld = wi; tblRender(); };
     wEl.appendChild(b);
   });
-  const t = $('tbl');
-  let html = '<thead><tr><th></th><th>Niveau</th><th class="n">Coups</th><th class="n">Forts</th><th class="n">Faibles</th><th class="n">Sans issue</th><th>Alertes</th><th></th></tr></thead><tbody>';
+  const { rows, scope } = tblRows(), byOrder = tblSort.key === 'n' && tblSort.dir === 1, t = $('tbl');
+  let html = '<thead><tr>' + TBL_COLS.map(([k, label]) => '<th class="sort' + (['len', 'strong', 'weak', 'dead'].includes(k) ? ' n' : '') + (tblSort.key === k ? ' on' : '') + '" data-sort="' + k + '" title="Trier par ' + label.toLowerCase() + '">' + label + (tblSort.key === k ? (tblSort.dir > 0 ? ' ▲' : ' ▼') : '') + '</th>').join('') + '<th></th></tr></thead><tbody>';
   let lot = null;
-  LEVELS.forEach((L, i) => {
-    if (L.world !== WORLDS[tblWorld]) return;
-    const r = evalCache.get(mapKey(L.map)), first = L.lot !== lot; lot = L.lot;
-    html += '<tr class="' + (first ? 'lot' : '') + (i === tblCur ? ' busy' : '') + '"><td>' + (i + 1) + '</td><td><b>' + L.name + '</b><small>' + L.lot + (L.stage ? ' · ' + L.stage : '') + '</small></td>' + tblCells(L, r) +
+  for (const x of rows) {
+    const { L, i } = x, first = byOrder && (L.world + L.lot) !== lot; lot = L.world + L.lot;
+    html += '<tr class="' + (first ? 'lot' : '') + (i === tblCur ? ' busy' : '') + '"><td>' + (i + 1) + '</td><td><b>' + L.name + '</b><small>' + (tblWorld < 0 ? L.world.split(' · ')[0] + ' · ' : '') + L.lot + (L.stage ? ' · ' + L.stage : '') + '</small></td>' + tblCells(x) +
       '<td class="act"><button data-play="' + i + '">Jouer</button><button data-edit="' + i + '" title="Ouvrir dans l\'éditeur">Éditer</button></td></tr>';
-  });
+  }
+  if (!rows.length) html += '<tr><td colspan="8" class="pend">Aucun niveau ne correspond aux filtres.</td></tr>';
   t.innerHTML = html + '</tbody>';
+  t.querySelectorAll('[data-sort]').forEach(th => th.onclick = () => {
+    const k = th.dataset.sort, col = TBL_COLS.find(c => c[0] === k);
+    tblSort = tblSort.key === k ? { key: k, dir: -tblSort.dir } : { key: k, dir: col[2] }; tblRender();
+  });
   t.querySelectorAll('[data-play]').forEach(b => b.onclick = () => { showTab('play'); go(+b.dataset.play); scrollTo(0, 0); });
   t.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { edLoad(+b.dataset.edit); showTab('edit'); scrollTo(0, 0); });
-  const todo = LEVELS.filter(L => L.world === WORLDS[tblWorld] && !evalCache.has(mapKey(L.map))).length;
-  $('tbl-run').disabled = !!tblW || !todo; $('tbl-all').disabled = !!tblW; $('tbl-stop').hidden = !tblW;
+  const inScope = LEVELS.filter(L => tblWorld < 0 || L.world === WORLDS[tblWorld]), done = inScope.filter(L => evalCache.has(mapKey(L.map))).length;
+  const withAl = inScope.map((L, k) => tblInfo(L, k)).filter(x => x.alerts.length).length;
+  $('tbl-count').textContent = rows.length + ' / ' + scope + ' niveau' + (scope > 1 ? 'x' : '') + ' affiché' + (rows.length > 1 ? 's' : '') + ' · ' + done + ' évalué' + (done > 1 ? 's' : '') + ' · ' + withAl + ' avec alertes';
+  $('tbl-run').hidden = tblWorld < 0;
+  $('tbl-run').disabled = !!tblW || done === inScope.length; $('tbl-all').disabled = !!tblW; $('tbl-stop').hidden = !tblW;
 }
-function tblCells(L, r) {
-  if (!r) return '<td class="n pend">' + (L.solution ? L.solution.length : '—') + '</td><td class="n pend">…</td><td class="n pend">…</td><td class="n pend">…</td><td class="pend">' + (tblCur >= 0 && LEVELS[tblCur] === L ? 'calcul…' : '') + '</td>';
-  if (r.errors || r.unsolvable || r.over) return '<td colspan="4" class="pend">—</td><td><span class="al red">' + (r.errors ? r.errors.join(' ') : r.unsolvable ? 'impossible' : 'trop d\'états') + '</span></td>';
-  // objectifs des Principes : ≥ 2 choix forts hors découverte, ≥ 3 pour une finale
-  const finale = /finale/i.test(L.lot), discovery = !finale && (!L.stage || L.stage === 'Découverte');
-  const few = !discovery && r.strong < (finale ? 3 : 2), al = [];
-  if (few) al.push('<span class="al red">peu de choix' + (finale ? ' pour une finale' : '') + '</span>');
-  if (r.useless.length) al.push('<span class="al red" title="' + r.useless.map(u => u.name + ' (l. ' + (u.r + 1) + ', c. ' + (u.c + 1) + ')').join(', ') + '">bloc inutile ×' + r.useless.length + '</span>');
-  for (const n of r.notEss) al.push('<span class="al" title="remplacer par ' + n.toName + ' laisse le niveau résoluble">' + n.name + ' non indispensable</span>');
-  if (r.zones.length) al.push('<span class="al">impasse ×' + r.zones.length + '</span>');
-  return '<td class="n">' + r.len + '</td><td class="n ' + (few ? 'warn' : r.strong >= 3 ? 'good' : '') + '">' + r.strong + '</td><td class="n">' + r.weak + '</td><td class="n">' + Math.round(100 * r.dead / r.total) + ' %</td><td>' + (al.join('') || '<span class="ok">✓</span>') + '</td>';
+function tblCells(x) {
+  const { L, r } = x;
+  if (x.status === 'pending') return '<td class="n pend">' + (L.solution ? L.solution.length : '—') + '</td><td class="n pend">…</td><td class="n pend">…</td><td class="n pend">…</td><td class="pend">' + (x.i === tblCur ? 'calcul…' : '') + '</td>';
+  const als = x.alerts.map(a => '<span class="al' + (a.red ? ' red' : '') + '"' + (a.title ? ' title="' + a.title + '"' : '') + '>' + a.txt + '</span>').join('');
+  if (x.status === 'error') return '<td colspan="4" class="pend">—</td><td>' + als + '</td>';
+  return '<td class="n">' + x.len + '</td><td class="n ' + (x.few ? 'warn' : x.strong >= 3 ? 'good' : '') + '">' + x.strong + '</td><td class="n">' + x.weak + '</td><td class="n">' + x.dead + ' %</td><td>' + (als || '<span class="ok">✓</span>') + '</td>';
 }
 function tblStart(all) {
   tblQueue = LEVELS.map((L, i) => i).filter(i => (all || LEVELS[i].world === WORLDS[tblWorld]) && !evalCache.has(mapKey(LEVELS[i].map)));
@@ -811,6 +844,7 @@ function tblStop() { if (tblW) { tblW.terminate(); tblW = null; } tblCur = -1; t
 $('tbl-run').onclick = () => tblStart(false);
 $('tbl-all').onclick = () => tblStart(true);
 $('tbl-stop').onclick = tblStop;
+$('tbl-filter').onchange = tblRender; $('tbl-stage').onchange = tblRender;
 renderMechs();
 edInit();
 const h = /^#niveau-(\d+)$/.exec(location.hash);

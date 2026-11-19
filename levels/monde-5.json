@@ -238,24 +238,21 @@
       "stage": "",
       "name": "Sous verre",
       "map": [
-        "##########",
-        "#PR....%##",
-        "#.###I####",
-        "#.###T####",
-        "#..Z...###",
-        "#.###.####",
-        "#.###+####",
-        "#D########",
-        "#E########",
-        "##########"
+        "###########",
+        "#P.ROO.%T##",
+        "#.RR.##OD##",
+        "##O..##Z.##",
+        "########E##",
+        "#######+###",
+        "###########"
       ],
       "teach": [
-        "Finale du monde 5 : le bloc inamovible est sous verre, au-dessus de la ligne du miroir à interrupteur. Une seule pression doit l'envoyer sur l'interrupteur de la porte.",
-        "Il faut d'abord placer le miroir pile dans sa colonne, puis déclencher avec un rond qui s'arrête sur le losange.",
-        "Piège : lancer le rond trop tôt, ou pousser le miroir une case trop loin, et tout est bloqué."
+        "Finale du monde 5 : un seul geste doit tout faire. Le rond s'arrête sur le losange grâce à la vitre, la brise, et le miroir à interrupteur l'envoie sur l'interrupteur de la porte, enfermé sous lui.",
+        "Avant ça, il faut un chemin jusqu'au losange : deux trous barrent la ligne du haut, et il n'y a que trois ronds.",
+        "Piège : un rond qui tombe dans le trou du bas, ou qui part trop tôt vers le losange, et il n'en reste plus assez."
       ],
-      "hint": "Pousse le miroir de deux cases vers la droite, puis remonte lancer le rond.",
-      "solution": "DDDRRRLLLUUURLDDDDDDD"
+      "hint": "Comble les deux trous de la ligne du haut avec deux ronds, puis amène le troisième sur cette ligne et lance-le vers la droite.",
+      "solution": "DRURRDDRULURLLLDRRDRULURRRRRDDD"
     }
   ]
 }

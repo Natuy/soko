@@ -233,7 +233,7 @@
   .tbl .al.red { background: #f6d6d3; color: #b3261e; }
   .tbl .ok { color: var(--player); font-size: .78rem; }
   .tbl .pend { color: var(--muted); }
-  .tbl td.act { width: 1%; }
+  .tbl td.act { width: 72px; min-width: 72px; }
   .tbl td.act button { display: block; width: 100%; margin: 2px 0; border: none; background: var(--bg); border-radius: 7px; padding: 3px 8px; cursor: pointer; font: inherit; font-size: .74rem; font-weight: 600; color: var(--ink); box-shadow: 0 0 0 1.5px var(--line) inset; }
   .tbl tr.busy td { background: rgba(232,178,58,.12); }
   /* six onglets : plus serrés sur les écrans étroits */
@@ -273,3 +273,9 @@
       linear-gradient(80deg, transparent 44%, rgba(120,185,220,.45) 45% 52%, transparent 53%) 62% 78% / 18% 20% no-repeat; }
   .tile.glass.shatter::after { animation: shatter .15s ease-in forwards; }
   @keyframes shatter { 40% { transform: scale(1.08); } 100% { transform: scale(.2) rotate(12deg); opacity: 0; } }
+  /* Tableau : tri par colonne et filtres */
+  .tbl th.sort { cursor: pointer; user-select: none; }
+  .tbl th.sort:hover { color: var(--ink); }
+  .tbl th.sort.on { color: var(--accent); }
+  .tbl-filters select { flex: 0 1 auto; }
+  .tbl-filters .ed-note { flex: 1 1 200px; text-align: right; }
