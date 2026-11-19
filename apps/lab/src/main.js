@@ -1,6 +1,6 @@
 // Lab : jeu en version simple, mécaniques, principes et éditeur de niveaux.
 // Les règles, le solveur et les niveaux viennent de packages/core : rien de tout ça n'est défini ici.
-import { sticky, parseLevel, add, translate, step, teleportPlan, actionDir, teleport, isWin, AN, LEVELS } from '../../../packages/core/src/index.js';
+import { sticky, parseLevel, add, translate, step, teleportPlan, actionDir, teleport, isWin, applyMove, AN, LEVELS } from '../../../packages/core/src/index.js';
 
 // Textes pédagogiques, rangés par nom de niveau (ils sont stockés avec chaque niveau dans /levels).
 const TEXTS = Object.fromEntries(LEVELS.map(l => [l.name, { teach: l.teach, hint: l.hint }]));
@@ -17,17 +17,21 @@ function tileSize(L) {
 }
 const rc = k => k.split(',').map(Number);
 
-function build() {
+// init : état de départ facultatif (la relecture se place ainsi au milieu d'une solution)
+function build(init) {
+  if (!rpKeep) rpEnd();
   const L = testLevel || LEVELS[cur];
   $('testbar').hidden = !testLevel;
-  state = parseLevel(L.map); history = []; ents = new Map(); idAt = new Map(); nextId = 0;
+  state = init || parseLevel(L.map); history = []; pending = [];
+  ents = new Map(); idAt = new Map(); nextId = 0;
+  const holes0 = init ? parseLevel(L.map).holes : null; // trous déjà comblés avant l'état de départ
   const T = tileSize(L), b = $('board');
   b.innerHTML = ''; b.style.setProperty('--t', T + 'px');
   b.classList.toggle('mir', state.mirrors); document.body.classList.toggle('mirmode', state.mirrors);
   b.style.width = state.w * T + 'px'; b.style.height = state.h * T + 'px';
   for (let r = 0; r < state.h; r++) for (let c = 0; c < state.w; c++) {
     const k = r + ',' + c, d = document.createElement('div');
-    d.className = 'tile ' + (state.glass.has(k) ? 'glass' : state.walls.has(k) ? 'wall' : state.holes.has(k) ? 'hole' : state.defl.has(k) ? 'defl ' + (state.defl.get(k) === '/' ? 's' : 'b') : state.doors.has(k) ? 'door' : 'floor' + ((r + c) % 2 ? ' alt' : '') + (state.switches.has(k) ? ' switch' : '') + (state.plates.has(k) ? ' plate' : ''));
+    d.className = 'tile ' + (state.glass.has(k) ? 'glass' : state.walls.has(k) ? 'wall' : state.holes.has(k) || (holes0 && holes0.has(k)) ? 'hole' + (state.holes.has(k) ? '' : ' filled') : state.defl.has(k) ? 'defl ' + (state.defl.get(k) === '/' ? 's' : 'b') : state.doors.has(k) ? 'door' : 'floor' + ((r + c) % 2 ? ' alt' : '') + (state.switches.has(k) ? ' switch' : '') + (state.plates.has(k) ? ' plate' : ''));
     d.dataset.k = k; d.style.left = c * T + 'px'; d.style.top = r * T + 'px';
     b.appendChild(d);
   }
@@ -47,8 +51,10 @@ function build() {
   const t = TEXTS[L.name] || { teach: ['Niveau en cours d\'édition : joue-le pour vérifier qu\'il fonctionne comme prévu.'], hint: 'Utilise le bouton « Résoudre » de l\'éditeur.' };
   $('teach').innerHTML = t.teach.map(p => '<p>' + p + '</p>').join('');
   $('hint').textContent = t.hint; $('hintbox').open = false;
+  $('solbtn').hidden = !!testLevel || !L.solution;
   if (!testLevel) viewWorld = WORLDS.indexOf(L.world);
   renderLevels(); updateMeta();
+  if (init && isWin(state)) $('win').classList.add('on');
 }
 
 function spawn(v, k, T) {
@@ -119,7 +125,8 @@ function snapshot() {
   return { state, idAt: new Map(idAt), filled: [...document.querySelectorAll('.tile.filled')].map(t => t.dataset.k) };
 }
 
-async function move(d) {
+async function move(d, fromRp) {
+  if (!fromRp && rp) rpEnd();
   if (busy) { if (pending.length < 4) pending.push(() => move(d)); return; } // appuis gardés pendant une animation
   if (isWin(state)) return;
   const r = step(state, d);
@@ -134,7 +141,8 @@ async function move(d) {
   }
 }
 
-async function action() {
+async function action(fromRp) {
+  if (!fromRp && rp) rpEnd();
   if (busy) { if (pending.length < 4) pending.push(() => action()); return; }
   if (isWin(state) || !state.mirrors) return;
   const ad = actionDir(state), r = ad && teleport(state, ad);
@@ -149,8 +157,9 @@ async function action() {
   }
 }
 
-function undo() {
+function undo(fromRp) {
   if (busy || !history.length) return;
+  if (!fromRp && rp) rpEnd();
   const s = history.pop();
   state = s.state; idAt = s.idAt;
   document.querySelectorAll('.tile.filled').forEach(t => { if (!s.filled.includes(t.dataset.k)) t.classList.remove('filled'); });
@@ -183,7 +192,7 @@ function updateMeta() {
       g.className = 'ghost' + (m.player ? '' : ' blk'); g.style.left = c * T + 'px'; g.style.top = r * T + 'px'; b.appendChild(g);
     }
   }
-  $('moves').textContent = history.length + ' coup' + (history.length > 1 ? 's' : '');
+  $('moves').textContent = rp ? rp.i + ' / ' + rp.sol.length : history.length + ' coup' + (history.length > 1 ? 's' : '');
   $('exit').classList.toggle('covered', state.blocks.has(state.exit));
   document.querySelectorAll('.door').forEach(t => t.classList.toggle('open', state.open));
   document.querySelectorAll('.switch, .plate').forEach(t => t.classList.toggle('on', state.player === t.dataset.k || state.blocks.has(t.dataset.k)));
@@ -318,14 +327,18 @@ function renderLevels() {
   $('prev').disabled = cur === 0; $('next').disabled = cur === LEVELS.length - 1;
 }
 
-function go(i) { pending = []; testLevel = null; replaying = false; cur = i; try { location.hash = 'niveau-' + (i + 1); } catch (e) {} build(); }
+function go(i) { pending = []; testLevel = null; cur = i; try { location.hash = 'niveau-' + (i + 1); } catch (e) {} build(); }
 
 document.querySelectorAll('.pad button').forEach(b => b.addEventListener('click', () => move(b.dataset.d)));
-$('undo').onclick = undo; $('reset').onclick = () => build(); $('act').onclick = action;
+$('undo').onclick = () => undo(); $('reset').onclick = () => build(); $('act').onclick = () => action();
 $('navtog').onclick = () => { navOpen = !navOpen; renderLevels(); };
 $('prev').onclick = () => { if (cur > 0) go(cur - 1); };
 $('next').onclick = () => { if (cur < LEVELS.length - 1) go(cur + 1); };
 addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input, textarea, select')) return;
+  if (!$('tab-edit').hidden) { edKey(e); return; }
+  if ($('tab-play').hidden) return;
+  if (rp && rpKey(e)) return;
   if (e.key === 'u' || (e.key === 'z' && (e.ctrlKey || e.metaKey)) || e.key === 'Backspace') { e.preventDefault(); undo(); return; }
   const m = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right', z: 'up', q: 'left' }[e.key];
   if (m) { e.preventDefault(); move(m); }
@@ -343,15 +356,17 @@ $('wrap').addEventListener('pointerup', e => {
 });
 let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!history.length) build(); }, 200); });
 function showTab(name) {
-  for (const n of ['play', 'mech', 'princ', 'ideas', 'edit']) { $('tab-' + n).hidden = n !== name; $('tb-' + n).classList.toggle('on', n === name); }
-  if (name !== 'play') replaying = false;
+  for (const n of ['play', 'mech', 'princ', 'ideas', 'edit', 'table']) { $('tab-' + n).hidden = n !== name; $('tb-' + n).classList.toggle('on', n === name); }
+  if (name !== 'play' && rp) { rp.playing = false; rpUI(); }
   if (name === 'edit') { edRender(true); if (!testLevel) $('ed-load').value = cur; }
-  try { location.hash = name === 'ideas' ? 'idees' : name === 'mech' ? 'mecaniques' : name === 'princ' ? 'principes' : name === 'edit' ? 'editeur' : testLevel ? 'editeur-test' : 'niveau-' + (cur + 1); } catch (e) {}
+  if (name === 'table') tblRender();
+  try { location.hash = name === 'table' ? 'tableau' : name === 'ideas' ? 'idees' : name === 'mech' ? 'mecaniques' : name === 'princ' ? 'principes' : name === 'edit' ? 'editeur' : testLevel ? 'editeur-test' : 'niveau-' + (cur + 1); } catch (e) {}
 }
 $('tb-ideas').onclick = () => showTab('ideas');
 $('tb-mech').onclick = () => showTab('mech');
 $('tb-princ').onclick = () => showTab('princ');
 $('tb-edit').onclick = () => showTab('edit');
+$('tb-table').onclick = () => showTab('table');
 $('tb-play').onclick = () => { showTab('play'); if (!history.length) build(); };
 // Onglet « Éditeur » : dessiner un niveau, le tester, le résoudre, l'évaluer et l'ajuster automatiquement
 const ED_TOOLS = [
@@ -362,7 +377,9 @@ const ED_TOOLS = [
   ['Monde 4', [['M', 'Miroir'], ['=', 'Miroir de ligne'], ['!', 'Miroir de colonne'], ['I', 'Bloc inamovible'], ['T', 'Mur transparent']]],
   ['Monde 5', [['Z', 'Miroir à interrupteur'], ['%', 'Interrupteur de miroir']]],
 ];
-let edMap = null, edTool = '#', edMarks = [], edWorker = null, edBusy = null, edLast = null, testLevel = null, replaying = false;
+let edMap = null, edTool = '#', edMarks = [], edWorker = null, edBusy = null, edLast = null, testLevel = null;
+// historique du plan : chaque entrée est un plan complet (tableau de lignes) ; un glisser compte pour un seul geste
+let edPast = [], edFuture = [], edStroke = null;
 try { const s = JSON.parse(localStorage.getItem('pz-editor') || 'null'); if (s && Array.isArray(s.map)) edMap = s.map; } catch (e) {}
 if (!edMap || !edMap.length) edMap = ['#########', '#.......#', '#P.S..OE#', '#.......#', '#########'];
 
@@ -410,7 +427,52 @@ function edRender(keepResults) {
   if (!keepResults) { edMarks = []; }
   edSave();
 }
-function edChanged() { edMarks = []; $('ed-board').querySelectorAll('.ed-mark').forEach(m => m.remove()); edRender(true); $('ed-results').classList.add('stale'); }
+function edChanged() { edMarks = []; $('ed-board').querySelectorAll('.ed-mark').forEach(m => m.remove()); edRender(true); $('ed-results').classList.add('stale'); edHistUI(); liveSchedule(); }
+// Remplace le plan en gardant l'ancien dans l'historique
+function edSet(m) { if (m.join('\n') === edMap.join('\n')) return; edPush(edMap); edMap = m; edChanged(); }
+function edPush(prev) { edPast.push(prev); if (edPast.length > 300) edPast.shift(); edFuture = []; }
+function edUndo() { if (!edPast.length) return; edFuture.push(edMap); edMap = edPast.pop(); edChanged(); }
+function edRedo() { if (!edFuture.length) return; edPast.push(edMap); edMap = edFuture.pop(); edChanged(); }
+function edHistUI() { $('ed-undo').disabled = !edPast.length; $('ed-redo').disabled = !edFuture.length; }
+function edKey(e) {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z') { e.preventDefault(); if (e.shiftKey) edRedo(); else edUndo(); }
+  else if (k === 'y') { e.preventDefault(); edRedo(); }
+}
+
+// Analyse en direct : le solveur tourne en tâche de fond peu après chaque modification du plan.
+// Une modification annule le calcul en cours ; la recherche est plafonnée pour rester rapide.
+const LIVE_CAP = 300000;
+let liveW = null, liveT = null, liveLast = null, liveSeq = 0;
+function liveSchedule() {
+  clearTimeout(liveT); if (liveW) { liveW.terminate(); liveW = null; }
+  const seq = ++liveSeq;
+  if (AN.checkMap(edMap).length) { $('ed-live').innerHTML = ''; return; }
+  liveShow('wait', 'Analyse…');
+  liveT = setTimeout(() => liveRun(seq), 350);
+}
+function liveRun(seq) {
+  const map = edMap.slice();
+  const done = r => { if (seq !== liveSeq) return; liveW = null; liveResult(map, r); };
+  let w = null;
+  try { w = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' }); } catch (e) { w = null; }
+  if (!w) { setTimeout(() => done(AN.solve(map, 40000)), 0); return; } // repli plus modeste sans tâche de fond
+  liveW = w;
+  w.onmessage = e => { if (e.data.type === 'done') { w.terminate(); done(e.data.r); } };
+  w.onerror = () => { w.terminate(); done({ error: 'Erreur pendant le calcul.' }); };
+  w.postMessage({ cmd: 'solve', map, opts: { cap: LIVE_CAP } });
+}
+function liveShow(cls, html) { const el = $('ed-live'); el.className = 'ed-live ' + cls; el.innerHTML = html; }
+function liveResult(map, r) {
+  if (r.error || r.errors) return liveShow('ko', '<span class="badge">⚠ ' + (r.error || r.errors.join(' ')) + '</span>');
+  if (r.unsolvable) { liveLast = null; return liveShow('ko', '<span class="badge">✗ Impossible</span><span>aucune suite de coups ne mène à la sortie.</span>'); }
+  if (r.over) { liveLast = null; return liveShow('big', '<span class="badge">? Trop d\'états</span><span>plus de ' + LIVE_CAP + ' : utilise « Résoudre ».</span>'); }
+  const n = r.sol.length, before = liveLast; liveLast = n;
+  const delta = before !== null && before !== n ? ' <span>(avant : ' + before + ')</span>' : '';
+  liveShow('ok', '<span class="badge">✓ ' + (n ? 'Résoluble en ' + n + ' coup' + (n > 1 ? 's' : '') : 'Déjà gagné') + '</span>' + delta + (n ? '<button class="ed-btn" id="ed-livesol">▶ Voir</button>' : ''));
+  if (n) $('ed-livesol').onclick = () => edReplay(map, r.sol);
+}
 const setCh = (m, r, c, ch) => { m = m.slice(); m[r] = m[r].slice(0, c) + ch + m[r].slice(c + 1); return m; };
 function edPaint(r, c) {
   let m = edMap; const cur = m[r][c], t = edTool;
@@ -420,6 +482,7 @@ function edPaint(r, c) {
   else if ((t === 'S' || t === 'R') && 'EXQ'.includes(cur)) m = setCh(m, r, c, t === 'S' ? 'X' : 'Q');
   else m = setCh(m, r, c, t);
   if (m.join('') === edMap.join('')) return;
+  if (!edStroke) edPush(edMap); // hors glisser (ne devrait pas arriver) : un geste par case
   edMap = m; edChanged();
 }
 function edCell(e) {
@@ -433,7 +496,7 @@ function edResize(kind) {
   if (kind === '-c' && W > 3) m = m.map(row => row.slice(0, -2) + row.slice(-1));
   if (kind === '+r') m.splice(H - 1, 0, '#' + '.'.repeat(W - 2) + '#');
   if (kind === '-r' && H > 3) m.splice(H - 2, 1);
-  edMap = m; edChanged();
+  edSet(m);
 }
 
 // Exécution des analyses dans un Web Worker (repli sur le fil principal si le navigateur le refuse)
@@ -490,6 +553,7 @@ async function edEval() {
   const f = edShowFail(r);
   if (f) { box.innerHTML = '<h3>Évaluation</h3>' + f; return; }
   edLast = { sol: r.sol, map: edMap.slice() };
+  evalCache.set(mapKey(edMap), r);
   const pct = Math.round(100 * r.dead / r.total);
   const chips = r.dec.map(([o, v]) => '<span class="ed-dec ' + (o >= 3 && v < o ? 'fort' : o >= 2 && v < o ? 'faible' : '') + '" title="' + o + ' gestes possibles, ' + v + ' encore gagnants">' + v + '/' + o + '</span>').join('');
   const ok = r.strong >= 2;
@@ -506,7 +570,7 @@ async function edEval() {
     '<p>' + solHtml([...r.sol].map(ch => ARROWS[ch]).join('')) + ' <button class="ed-btn" id="ed-replay">▶ Voir la solution</button></p>' +
     '<details><summary>Comment lire ces mesures</summary><p>Le long de la solution la plus courte, à chaque nouvelle disposition des blocs, on compte les gestes possibles (pousser un bloc, se téléporter ; marcher ne compte pas) et ceux qui laissent le niveau gagnable.</p><p><b>Choix fort</b> : au moins 3 gestes possibles, dont au moins un perdant. <b>Choix faible</b> : au moins 2 gestes, dont au moins un perdant.</p><p><b>Bloc inutile</b> : le retirer laisse le niveau résoluble. Un bloc qui sert d\'alternative crédible au bon bloc peut rester. <b>Mécanique non indispensable</b> : la remplacer (par exemple un rond par un carré) laisse le niveau résoluble.</p><p><b>Impasse superflue</b> : un groupe de cases (sol ou trou) relié au reste du plan par un seul côté, que la solution la plus courte ne traverse pas, et qu\'on peut transformer en mur sans rendre le niveau impossible et sans perdre de choix forts ou faibles. Les autres cases sans utilité (marge d\'une salle, par exemple) ne sont pas signalées.</p></details>';
   $('ed-replay').onclick = () => edReplay(edLast.map, edLast.sol);
-  if (r.zones.length) $('ed-trim').onclick = () => { let m = edMap; for (const z of r.zones) for (const p of z.cells) m = setCh(m, p.r, p.c, '#'); edMap = m; edChanged(); };
+  if (r.zones.length) $('ed-trim').onclick = () => { let m = edMap; for (const z of r.zones) for (const p of z.cells) m = setCh(m, p.r, p.c, '#'); edSet(m); };
 }
 let edBest = null;
 async function edOpt() {
@@ -520,7 +584,7 @@ async function edOpt() {
       (best.diff ? '<p><button class="ed-btn" id="ed-apply">Appliquer au plan</button> <button class="ed-btn" id="ed-optplay">Tester cette variante</button></p>' : '<p>Aucune amélioration trouvée pour l\'instant.</p>');
     if (best.diff) drawStatic($('ed-optboard'), best.map, Math.max(14, Math.floor(edT() * 0.6)), best.map.flatMap((row, r) => [...row].map((ch, c) => ch !== (edMapAtStart[r] || '')[c] ? { r, c, title: 'Case modifiée' } : null).filter(Boolean)));
     if (best.diff) $('ed-optboard').querySelectorAll('.ed-mark').forEach(m => m.classList.add('chg'));
-    if (best.diff) { $('ed-apply').onclick = () => { edMap = best.map.slice(); edChanged(); }; $('ed-optplay').onclick = () => edTest(best.map); }
+    if (best.diff) { $('ed-apply').onclick = () => edSet(best.map.slice()); $('ed-optplay').onclick = () => edTest(best.map); }
   };
   const edMapAtStart = edMap.slice(); let startTxt = '';
   const r = await edRun('opt', { seconds, target, maxDiff }, p => { startTxt = p.start.strong + ' forts, ' + p.start.weak + ' faibles, ' + p.start.len + ' coups'; show(p.best, startTxt, p.it, p.elapsed, false); });
@@ -532,17 +596,83 @@ async function edOpt() {
 
 // Tester dans l'onglet Jouer
 function edTest(map) {
-  replaying = false; testLevel = { world: 'Éditeur', lot: 'Niveau de l\'éditeur', stage: '', name: 'Niveau de l\'éditeur', map: (map || edMap).slice() };
+  testLevel = { world: 'Éditeur', lot: 'Niveau de l\'éditeur', stage: '', name: 'Niveau de l\'éditeur', map: (map || edMap).slice() };
   showTab('play'); build();
 }
-async function edReplay(map, sol) {
-  edTest(map); replaying = true; await wait(450);
-  for (const ch of sol) {
-    if (!replaying || !testLevel) return;
-    if (ch === '*') await action(); else await move({ U: 'up', D: 'down', L: 'left', R: 'right' }[ch]);
-    await wait(120);
-  }
-  replaying = false;
+function edReplay(map, sol) { edTest(map); rpStart(sol); rpPlay(); }
+
+// ---- Relecture pas à pas d'une solution (onglet Jouer) ----
+// rp.i = nombre de coups déjà joués. Avancer anime le coup ; reculer annule, ou recalcule l'état si l'historique manque.
+let rp = null, rpKeep = false;
+const MV = { U: 'up', D: 'down', L: 'left', R: 'right' };
+const evalCache = new Map(); // plan → résultat de evaluate, pour la session
+const mapKey = m => m.join('\n');
+const decCls = (o, v) => o >= 3 && v < o ? 'fort' : o >= 2 && v < o ? 'faible' : '';
+function rpStart(sol) {
+  const L = testLevel || LEVELS[cur], ev = evalCache.get(mapKey(L.map));
+  let dec = [];
+  // la solution de l'évaluation porte les moments de décision : on la préfère si elle est aussi courte
+  if (ev && ev.sol !== undefined && ev.sol.length <= sol.length) { sol = ev.sol; dec = ev.dec || []; }
+  rp = { map: L.map.slice(), sol, i: 0, playing: false, dec: new Map(dec.filter(d => decCls(d[0], d[1])).map(d => [d[2], { cls: decCls(d[0], d[1]), o: d[0], v: d[1] }])), evaluated: !!ev };
+  const tl = $('rptl'); tl.innerHTML = '';
+  [...sol].forEach((ch, j) => {
+    const b = document.createElement('button'), d = rp.dec.get(j);
+    b.textContent = ARROWS[ch]; if (d) b.classList.add(d.cls);
+    b.title = 'Se placer avant le coup ' + (j + 1) + (d ? ' · choix ' + d.cls + ' : ' + d.v + ' geste' + (d.v > 1 ? 's' : '') + ' gagnant' + (d.v > 1 ? 's' : '') + ' sur ' + d.o : '');
+    b.onclick = () => rpJump(j); tl.appendChild(b);
+  });
+  $('rpleg').innerHTML = rp.dec.size ? 'Soulignés, les moments de décision :<i style="background:var(--player)"></i>choix fort<i style="background:#e0a640"></i>choix faible. Clique un coup pour te placer juste avant.'
+    : 'Clique un coup pour te placer juste avant.' + (rp.evaluated ? ' Aucun vrai choix le long de cette solution.' : ' Évalue le niveau (éditeur ou onglet Tableau) pour voir les moments de décision.');
+  rpUI();
+}
+function rpUI() {
+  $('rpbar').hidden = !rp; if (!rp) return;
+  const n = rp.sol.length;
+  $('rpcount').textContent = 'coup ' + rp.i + ' / ' + n;
+  $('moves').textContent = rp.i + ' / ' + n;
+  $('rp-play').textContent = rp.playing ? '⏸' : '▶';
+  $('rp-first').disabled = $('rp-prev').disabled = rp.i === 0;
+  $('rp-next').disabled = $('rp-last').disabled = rp.i >= n;
+  [...$('rptl').children].forEach((b, j) => { b.classList.toggle('done', j < rp.i); b.classList.toggle('cur', j === rp.i); });
+}
+function rpEnd() { if (rp) rp.playing = false; rp = null; $('rpbar').hidden = true; }
+// Un clic pendant une animation est exécuté dès qu'elle se termine
+function whenIdle(fn) { if (!busy) return fn(); setTimeout(() => whenIdle(fn), 40); }
+function rpJump(i) {
+  if (!rp) return;
+  rp.playing = false;
+  if (busy) return whenIdle(() => rpJump(i));
+  let s = parseLevel(rp.map);
+  for (let j = 0; j < i; j++) { const r = applyMove(s, rp.sol[j]); if (!r) break; s = r.state; }
+  rpKeep = true; build(i ? s : undefined); rpKeep = false;
+  rp.i = i; rpUI();
+}
+async function rpNext() {
+  if (!rp || busy || rp.i >= rp.sol.length) return;
+  const ch = rp.sol[rp.i]; rp.i++; rpUI();
+  if (ch === '*') await action(true); else await move(MV[ch], true);
+}
+function rpPrev() {
+  if (!rp || !rp.i) return;
+  rp.playing = false;
+  if (busy) return whenIdle(rpPrev);
+  if (history.length) { undo(true); rp.i--; rpUI(); } else rpJump(rp.i - 1);
+}
+async function rpPlay() {
+  if (!rp) return;
+  if (rp.playing) { rp.playing = false; rpUI(); return; }
+  if (rp.i >= rp.sol.length) rpJump(0);
+  const me = rp; me.playing = true; rpUI();
+  await wait(350);
+  while (rp === me && me.playing && me.i < me.sol.length) { await rpNext(); await wait(140); }
+  if (rp === me) { me.playing = false; rpUI(); }
+}
+const rpPause = () => { if (rp) { rp.playing = false; rpUI(); } };
+const rpStep = () => { rpPause(); whenIdle(rpNext); };
+function rpKey(e) {
+  const f = { ArrowRight: rpStep, ArrowLeft: rpPrev, ' ': rpPlay, Home: () => rpJump(0), End: () => rpJump(rp.sol.length), Escape: rpEnd }[e.key];
+  if (!f) return false;
+  e.preventDefault(); f(); return true;
 }
 
 function edInit() {
@@ -561,23 +691,24 @@ function edInit() {
   const sel = $('ed-load'); sel.innerHTML = '';
   WORLDS.forEach(w => { const og = document.createElement('optgroup'); og.label = w; LEVELS.forEach((l, i) => { if (l.world === w) { const o = document.createElement('option'); o.value = i; o.textContent = (i + 1) + '. ' + l.name; og.appendChild(o); } }); sel.appendChild(og); });
   sel.value = cur;
-  $('ed-loadbtn').onclick = () => { edMap = LEVELS[+sel.value].map.slice(); $('ed-results').innerHTML = '<h3>Résultats</h3><p class="ed-note">Lance le solveur ou l\'évaluation.</p>'; $('ed-optres').innerHTML = ''; edChanged(); $('ed-results').classList.remove('stale'); };
+  $('ed-loadbtn').onclick = () => edLoad(+sel.value);
   $('ed-new').onclick = () => {
     const W = Math.max(4, Math.min(20, +$('ed-w').value || 9)), H = Math.max(4, Math.min(16, +$('ed-h').value || 7));
-    edMap = Array.from({ length: H }, (_, r) => Array.from({ length: W }, (_, c) => r === 0 || c === 0 || r === H - 1 || c === W - 1 ? '#' : '.').join(''));
-    edMap = setCh(edMap, 1, 1, 'P'); edMap = setCh(edMap, H - 2, W - 2, 'E'); edChanged();
+    let m = Array.from({ length: H }, (_, r) => Array.from({ length: W }, (_, c) => r === 0 || c === 0 || r === H - 1 || c === W - 1 ? '#' : '.').join(''));
+    m = setCh(m, 1, 1, 'P'); m = setCh(m, H - 2, W - 2, 'E'); edSet(m);
   };
   document.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => edResize(b.dataset.rz));
   let down = false;
   const bd = $('ed-board');
-  bd.addEventListener('pointerdown', e => { const p = edCell(e); if (!p) return; down = true; bd.setPointerCapture(e.pointerId); edPaint(...p); e.preventDefault(); });
+  const strokeEnd = () => { down = false; if (edStroke && edStroke !== edMap) { edPush(edStroke); edHistUI(); } edStroke = null; };
+  bd.addEventListener('pointerdown', e => { const p = edCell(e); if (!p) return; down = true; edStroke = edMap; bd.setPointerCapture(e.pointerId); edPaint(...p); e.preventDefault(); });
   bd.addEventListener('pointermove', e => { if (!down) return; const p = edCell(e); if (p && edTool !== 'P' && edTool !== 'E') edPaint(...p); });
-  bd.addEventListener('pointerup', () => { down = false; });
-  bd.addEventListener('pointercancel', () => { down = false; });
+  bd.addEventListener('pointerup', strokeEnd);
+  bd.addEventListener('pointercancel', strokeEnd);
   $('ed-text').addEventListener('change', () => {
     const rows = $('ed-text').value.split('\n').map(r => r.replace(/\s+$/, '')).filter(r => r.length);
     if (!rows.length) return; const W = Math.max(...rows.map(r => r.length));
-    edMap = rows.map(r => r.padEnd(W, '#')); edChanged();
+    edSet(rows.map(r => r.padEnd(W, '#')));
   });
   $('ed-copy').onclick = () => {
     const txt = JSON.stringify(edMap);
@@ -586,10 +717,82 @@ function edInit() {
   };
   $('ed-test').onclick = () => edTest();
   $('ed-solve').onclick = edSolve; $('ed-eval').onclick = edEval; $('ed-opt').onclick = edOpt; $('ed-stop').onclick = edStop;
-  $('testback').onclick = () => { replaying = false; showTab('edit'); };
-  edRender(); edUI();
+  $('testback').onclick = () => { rpEnd(); showTab('edit'); };
+  $('ed-undo').onclick = edUndo; $('ed-redo').onclick = edRedo;
+  edRender(); edUI(); edHistUI(); liveSchedule();
+}
+function edLoad(i) {
+  edSet(LEVELS[i].map.slice()); $('ed-load').value = i;
+  $('ed-results').innerHTML = '<h3>Résultats</h3><p class="ed-note">Lance le solveur ou l\'évaluation.</p>'; $('ed-optres').innerHTML = ''; $('ed-results').classList.remove('stale');
 }
 // FIN ÉDITEUR
+
+// Boutons de la relecture et solution des niveaux du jeu
+$('rp-first').onclick = () => rpJump(0); $('rp-prev').onclick = rpPrev; $('rp-play').onclick = rpPlay;
+$('rp-next').onclick = rpStep; $('rp-last').onclick = () => { if (rp) rpJump(rp.sol.length); };
+$('rp-quit').onclick = () => { rpEnd(); build(); };
+$('solbtn').onclick = () => { const L = LEVELS[cur]; if (!L.solution) return; build(); rpStart(L.solution); $('rpbar').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
+
+// ---- Onglet « Tableau » : les mesures de l'évaluation pour tous les niveaux d'un monde ----
+let tblWorld = 0, tblW = null, tblQueue = [], tblCur = -1;
+function tblRender() {
+  const wEl = $('tbl-worlds'); wEl.innerHTML = '';
+  WORLDS.forEach((w, wi) => {
+    const b = document.createElement('button'); b.textContent = 'Monde ' + (wi + 1); b.title = w;
+    b.className = wi === tblWorld ? 'on' : ''; b.onclick = () => { tblWorld = wi; tblRender(); };
+    wEl.appendChild(b);
+  });
+  const t = $('tbl');
+  let html = '<thead><tr><th></th><th>Niveau</th><th class="n">Coups</th><th class="n">Forts</th><th class="n">Faibles</th><th class="n">Sans issue</th><th>Alertes</th><th></th></tr></thead><tbody>';
+  let lot = null;
+  LEVELS.forEach((L, i) => {
+    if (L.world !== WORLDS[tblWorld]) return;
+    const r = evalCache.get(mapKey(L.map)), first = L.lot !== lot; lot = L.lot;
+    html += '<tr class="' + (first ? 'lot' : '') + (i === tblCur ? ' busy' : '') + '"><td>' + (i + 1) + '</td><td><b>' + L.name + '</b><small>' + L.lot + (L.stage ? ' · ' + L.stage : '') + '</small></td>' + tblCells(L, r) +
+      '<td class="act"><button data-play="' + i + '">Jouer</button><button data-edit="' + i + '" title="Ouvrir dans l\'éditeur">Éditer</button></td></tr>';
+  });
+  t.innerHTML = html + '</tbody>';
+  t.querySelectorAll('[data-play]').forEach(b => b.onclick = () => { showTab('play'); go(+b.dataset.play); scrollTo(0, 0); });
+  t.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { edLoad(+b.dataset.edit); showTab('edit'); scrollTo(0, 0); });
+  const todo = LEVELS.filter(L => L.world === WORLDS[tblWorld] && !evalCache.has(mapKey(L.map))).length;
+  $('tbl-run').disabled = !!tblW || !todo; $('tbl-all').disabled = !!tblW; $('tbl-stop').hidden = !tblW;
+}
+function tblCells(L, r) {
+  if (!r) return '<td class="n pend">' + (L.solution ? L.solution.length : '—') + '</td><td class="n pend">…</td><td class="n pend">…</td><td class="n pend">…</td><td class="pend">' + (tblCur >= 0 && LEVELS[tblCur] === L ? 'calcul…' : '') + '</td>';
+  if (r.errors || r.unsolvable || r.over) return '<td colspan="4" class="pend">—</td><td><span class="al red">' + (r.errors ? r.errors.join(' ') : r.unsolvable ? 'impossible' : 'trop d\'états') + '</span></td>';
+  // objectifs des Principes : ≥ 2 choix forts hors découverte, ≥ 3 pour une finale
+  const finale = /finale/i.test(L.lot), discovery = !finale && (!L.stage || L.stage === 'Découverte');
+  const few = !discovery && r.strong < (finale ? 3 : 2), al = [];
+  if (few) al.push('<span class="al red">peu de choix' + (finale ? ' pour une finale' : '') + '</span>');
+  if (r.useless.length) al.push('<span class="al red" title="' + r.useless.map(u => u.name + ' (l. ' + (u.r + 1) + ', c. ' + (u.c + 1) + ')').join(', ') + '">bloc inutile ×' + r.useless.length + '</span>');
+  for (const n of r.notEss) al.push('<span class="al" title="remplacer par ' + n.toName + ' laisse le niveau résoluble">' + n.name + ' non indispensable</span>');
+  if (r.zones.length) al.push('<span class="al">impasse ×' + r.zones.length + '</span>');
+  return '<td class="n">' + r.len + '</td><td class="n ' + (few ? 'warn' : r.strong >= 3 ? 'good' : '') + '">' + r.strong + '</td><td class="n">' + r.weak + '</td><td class="n">' + Math.round(100 * r.dead / r.total) + ' %</td><td>' + (al.join('') || '<span class="ok">✓</span>') + '</td>';
+}
+function tblStart(all) {
+  tblQueue = LEVELS.map((L, i) => i).filter(i => (all || LEVELS[i].world === WORLDS[tblWorld]) && !evalCache.has(mapKey(LEVELS[i].map)));
+  if (!tblQueue.length) return;
+  try { tblW = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' }); } catch (e) { tblW = null; $('tbl-status').textContent = 'Les tâches de fond ne sont pas disponibles dans ce navigateur.'; return; }
+  const total = tblQueue.length;
+  const next = () => {
+    if (!tblQueue.length) { tblStop(); $('tbl-status').textContent = 'Terminé : ' + total + ' niveau' + (total > 1 ? 'x' : '') + ' évalué' + (total > 1 ? 's' : '') + '.'; return; }
+    tblCur = tblQueue.shift();
+    $('tbl-status').textContent = 'Niveau ' + (tblCur + 1) + ' · ' + LEVELS[tblCur].name + ' (' + (total - tblQueue.length) + ' / ' + total + ')';
+    if (!$('tab-table').hidden) tblRender();
+    tblW.postMessage({ cmd: 'eval', map: LEVELS[tblCur].map });
+  };
+  tblW.onmessage = e => {
+    const d = e.data;
+    if (d.type === 'progress') $('tbl-status').textContent = 'Niveau ' + (tblCur + 1) + ' · ' + LEVELS[tblCur].name + ' : ' + d.msg;
+    if (d.type === 'done') { evalCache.set(mapKey(LEVELS[tblCur].map), d.r); next(); }
+  };
+  tblW.onerror = () => { tblStop(); $('tbl-status').textContent = 'Erreur pendant le calcul.'; };
+  next();
+}
+function tblStop() { if (tblW) { tblW.terminate(); tblW = null; } tblCur = -1; tblQueue = []; $('tbl-status').textContent = 'Calcul arrêté.'; tblRender(); }
+$('tbl-run').onclick = () => tblStart(false);
+$('tbl-all').onclick = () => tblStart(true);
+$('tbl-stop').onclick = tblStop;
 renderMechs();
 edInit();
 const h = /^#niveau-(\d+)$/.exec(location.hash);
@@ -598,4 +801,5 @@ build();
 if (location.hash === '#idees') showTab('ideas');
 if (location.hash === '#mecaniques') showTab('mech');
 if (location.hash === '#principes') showTab('princ');
+if (location.hash === '#tableau') showTab('table');
 if (location.hash === '#editeur' || location.hash === '#editeur-test') showTab('edit');

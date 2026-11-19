@@ -189,3 +189,52 @@
   .ed-prev .board { box-shadow: none; }
   .testbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--ink); color: var(--bg); border-radius: 10px; padding: 6px 6px 6px 12px; font-size: .85rem; margin: 0 0 10px; }
   .testbar button { font: inherit; font-size: .82rem; font-weight: 600; border: none; border-radius: 8px; padding: 5px 10px; background: var(--bg); color: var(--ink); cursor: pointer; }
+  /* Analyse en direct dans l'éditeur */
+  .ed-cur.ed-bar { margin: 0 0 6px; }
+  .ed-live { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: .85rem; min-height: 1.6em; margin: 4px 0 0; color: var(--muted); }
+  .ed-live:empty { display: none; }
+  .ed-live .badge { font-weight: 700; padding: 2px 9px; border-radius: 99px; background: var(--bg); }
+  .ed-live.ok .badge { background: #d8ead0; color: #2f6b3a; }
+  .ed-live.ko .badge { background: #f6d6d3; color: #b3261e; }
+  .ed-live.big .badge { background: #f3e2c4; color: #8a5a12; }
+  .ed-live .ed-btn { padding: 3px 9px; font-size: .78rem; }
+  /* Relecture pas à pas */
+  .rpbar { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin: 0 0 10px; }
+  .rphead { display: flex; align-items: center; gap: 10px; font-size: .88rem; }
+  .rphead span { color: var(--muted); font-variant-numeric: tabular-nums; flex: 1; }
+  .rpx { border: none; background: transparent; font-size: 1rem; color: var(--muted); cursor: pointer; padding: 2px 6px; }
+  .rpctl { display: flex; justify-content: center; gap: 6px; margin: 8px 0; }
+  .rpctl button { min-width: 44px; height: 38px; border: none; border-radius: 10px; background: var(--bg); color: var(--ink); font-size: 1rem; cursor: pointer; box-shadow: 0 0 0 1.5px var(--line) inset; }
+  .rpctl button.main { background: var(--ink); color: var(--bg); box-shadow: none; min-width: 56px; }
+  .rpctl button:disabled { opacity: .35; cursor: default; }
+  .rptl { display: flex; flex-wrap: wrap; gap: 3px; }
+  .rptl button { width: 26px; height: 26px; padding: 0; border: none; border-radius: 6px; background: var(--bg); color: var(--muted); font-size: .8rem; cursor: pointer; position: relative; }
+  .rptl button.done { background: var(--line); color: var(--ink); }
+  .rptl button.cur { outline: 2px solid var(--ink); outline-offset: 1px; color: var(--ink); }
+  .rptl button.faible { box-shadow: inset 0 -4px 0 #e0a640; }
+  .rptl button.fort { box-shadow: inset 0 -4px 0 var(--player); }
+  .rpleg { font-size: .78rem; color: var(--muted); margin: 6px 0 0; }
+  .rpleg i { display: inline-block; width: 12px; height: 4px; border-radius: 2px; vertical-align: middle; margin: 0 4px 0 8px; }
+  /* Tableau d'un monde */
+  .tbl-worlds { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; }
+  .tbl-worlds button { font: inherit; font-size: .82rem; font-weight: 600; padding: 6px 10px; border: none; border-radius: 9px; background: var(--bg); color: var(--muted); cursor: pointer; }
+  .tbl-worlds button.on { background: var(--ink); color: var(--bg); }
+  .tbl-wrap { overflow-x: auto; margin: 0 -4px; }
+  .tbl { font-size: .84rem; min-width: 520px; }
+  .tbl th { text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 4px; font-weight: 700; white-space: nowrap; }
+  .tbl th.n, .tbl td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .tbl td { padding: 6px 4px; vertical-align: middle; }
+  .tbl td:first-child { width: 28px; }
+  .tbl td small { display: block; color: var(--muted); font-size: .72rem; }
+  .tbl tr.lot td { border-top: 2px solid var(--line); }
+  .tbl td.n.warn { color: #b3261e; font-weight: 700; }
+  .tbl td.n.good { color: var(--player); font-weight: 700; }
+  .tbl .al { display: inline-block; font-size: .7rem; padding: 1px 6px; margin: 1px 2px 1px 0; border-radius: 6px; background: #f3e2c4; color: #8a5a12; white-space: nowrap; }
+  .tbl .al.red { background: #f6d6d3; color: #b3261e; }
+  .tbl .ok { color: var(--player); font-size: .78rem; }
+  .tbl .pend { color: var(--muted); }
+  .tbl td.act { width: 1%; }
+  .tbl td.act button { display: block; width: 100%; margin: 2px 0; border: none; background: var(--bg); border-radius: 7px; padding: 3px 8px; cursor: pointer; font: inherit; font-size: .74rem; font-weight: 600; color: var(--ink); box-shadow: 0 0 0 1.5px var(--line) inset; }
+  .tbl tr.busy td { background: rgba(232,178,58,.12); }
+  /* six onglets : plus serrés sur les écrans étroits */
+  @media (max-width: 480px) { .tabs { gap: 2px; padding: 3px; } .tabs button { flex: 1 1 auto; padding: 7px 3px; font-size: .72rem !important; min-width: 0; } }
