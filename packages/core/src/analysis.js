@@ -67,9 +67,12 @@ const AN = (function () {
   const bk = s => stateKey(Object.assign({}, s, { player: '' }));
   // Le long de la solution la plus courte : à chaque configuration de blocs, combien de gestes possibles
   // (pousser un bloc, se téléporter ; marcher ne compte pas) et combien mènent encore à la victoire.
-  // Chaque entrée vaut [gestes possibles, gestes gagnants, indice du coup de la solution où ce choix se présente].
+  // Un geste qu'on peut défaire (revenir ensuite à la même disposition, joueur compris dans la même zone)
+  // n'est pas un choix : c'est de l'exploration. Seuls les gestes irréversibles sont comptés.
+  // Chaque entrée vaut [gestes irréversibles, dont gagnants, indice du coup de la solution, gestes possibles au total].
   function choices(ex) {
     const { st, adj, good, path } = ex; const dec = []; const seen = new Set();
+    if (!ex.rev) { ex.rev = st.map(() => []); adj.forEach((a, i) => a.forEach(j => ex.rev[j].push(i))); }
     const starts = [0, ...path.slice(0, -1)];
     for (let j = 0; j < starts.length; j++) {
       const i = starts[j];
@@ -80,10 +83,14 @@ const AN = (function () {
         for (const b of adj[a]) {
           const kb = bk(st[b]); const walk = kb === ka && adjCell(st[a].player, st[b].player);
           if (walk) { if (!zone.has(b)) { zone.add(b); q.push(b); } }
-          else { const k2 = kb === ka ? 'tp' + stateKey(st[b]) : kb; opts.set(k2, (opts.get(k2) || false) || good.has(b)); }
+          else { const k2 = kb === ka ? 'tp' + stateKey(st[b]) : kb; const o = opts.get(k2) || { win: false, states: [] }; o.win = o.win || good.has(b); o.states.push(b); opts.set(k2, o); }
         }
       }
-      dec.push([opts.size, [...opts.values()].filter(Boolean).length, j]);
+      // états d'où l'on peut revenir dans la zone de départ
+      const back = new Set(zone), q2 = [...zone];
+      while (q2.length) { const x = q2.pop(); for (const y of ex.rev[x]) if (!back.has(y)) { back.add(y); q2.push(y); } }
+      const firm = [...opts.values()].filter(o => o.states.every(b => !back.has(b)));
+      dec.push([firm.length, firm.filter(o => o.win).length, j, opts.size]);
     }
     return dec;
   }

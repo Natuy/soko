@@ -96,20 +96,18 @@
       "stage": "Twist",
       "name": "Séparer",
       "map": [
-        "###########",
-        "###C###..##",
-        "#P.S.M...##",
-        "#######O###",
-        "#######E###",
-        "###########"
+        "###############",
+        "#PS.O.#########",
+        "##C...OOME.O.##",
+        "###############"
       ],
       "teach": [
-        "Le faisceau n'emporte que les blocs qui sont dedans : il sépare un groupe collé.",
-        "Le carré détaché peut enfin boucher un trou seul.",
-        "Piège : de l'autre côté, pousser le carré vers le miroir le coince dans le passage."
+        "Le carré et le carré collé sous lui avancent ensemble : le groupe passe au-dessus du trou, qu'un carré seul ne franchirait pas.",
+        "Le faisceau n'emporte que ce qui est dans sa rangée : il sépare le groupe, et le bloc du bas part seul boucher le trou de l'autre côté.",
+        "Au-dessus du trou, le carré du haut ne se pousse plus : pousse le groupe par le bas."
       ],
-      "hint": "Téléporte-toi : le carré part avec toi, sans le bloc collé au-dessus. Puis pousse-le dans le trou.",
-      "solution": "R*ULDDD"
+      "hint": "Pousse le groupe de trois cases vers la droite, puis traverse le miroir depuis la case juste derrière lui.",
+      "solution": "RDRR*LLL"
     },
     {
       "lot": "Miroirs de ligne et de colonne",
@@ -157,19 +155,19 @@
       "name": "Croisement",
       "map": [
         "##########",
-        "#.....####",
-        "#.....#E##",
-        "#P...=#.##",
-        "#.....####",
-        "#..!..####",
+        "#######..#",
+        "#######..#",
+        "#P...=#..#",
+        "#.!.######",
+        "#..####E##",
         "##########"
       ],
       "teach": [
-        "Deux miroirs utilisables à la fois s'annulent : quand le joueur est aligné avec les deux, rien ne se passe.",
-        "Il faut écarter celui qui gêne, même s'il ne sert à rien."
+        "Deux miroirs utilisables à la fois s'annulent : au croisement, le miroir de colonne sous toi empêche le miroir de ligne de fonctionner.",
+        "Écarte-le, mais pas n'importe où : emporte-le dans le faisceau du miroir de ligne. De l'autre côté, c'est lui qui te fera passer le second mur."
       ],
-      "hint": "Pousse le miroir de colonne d'une case sur le côté, puis reviens au croisement.",
-      "solution": "DDRRUU*U"
+      "hint": "Monte le miroir de colonne dans ta rangée, pousse-le d'une case vers la droite, puis traverse le miroir de ligne depuis la case derrière lui.",
+      "solution": "DDRULUR*UUL*"
     },
     {
       "lot": "Murs transparents",
@@ -192,19 +190,19 @@
       "stage": "Approfondissement",
       "name": "Prisonnier",
       "map": [
-        "##############",
-        "#..TITM#+..DE#",
-        "#PS###########",
-        "#..###########",
-        "##############"
+        "#################",
+        "###O..TITM.+EDO.#",
+        "#.S.S.###########",
+        "#P....###########",
+        "#################"
       ],
       "teach": [
-        "Le bloc inamovible est enfermé entre deux vitres : impossible de l'approcher.",
-        "Mais il est dans le faisceau : le miroir l'emporte à travers les vitres et le pose sur l'interrupteur de la porte.",
-        "Piège : pousser le carré dans la rangée du miroir prend la seule case d'où la téléportation fonctionne."
+        "Le bloc inamovible est enfermé entre deux vitres : impossible de l'approcher. Mais il est dans le faisceau : le miroir l'emporte à travers les vitres et le pose sur l'interrupteur de la porte.",
+        "Le faisceau emporte aussi tout ce qui est devant toi : un carré placé juste devant la vitre atterrit dans le trou de l'autre côté.",
+        "Encore faut-il pouvoir se placer dans la rangée : le trou de gauche doit d'abord être comblé."
       ],
-      "hint": "Monte dans la rangée du miroir sans y pousser le carré, et téléporte-toi depuis la case juste devant la vitre.",
-      "solution": "UR*RR"
+      "hint": "Comble le trou de gauche avec un carré, monte l'autre juste devant la vitre, puis traverse le miroir depuis le trou comblé.",
+      "solution": "URDRUDRULU*LLL"
     },
     {
       "lot": "Murs transparents",
@@ -230,19 +228,19 @@
       "name": "Croisement (remix)",
       "map": [
         "##########",
-        "#.....####",
-        "#.....#E##",
-        "#P..#=#.##",
-        "#.....####",
-        "#..!..####",
+        "#######..#",
+        "#######..#",
+        "#P..=.#..#",
+        "#.!.######",
+        "#..####E##",
         "##########"
       ],
       "teach": [
-        "Même plan que « Croisement », avec un seul mur en plus, qui cache le miroir de ligne depuis la case de croisement.",
-        "Il faut déplacer le miroir de ligne dans une autre rangée, et le miroir de colonne avec lui pour éviter qu'ils s'annulent."
+        "Même plan que « Croisement », avec le miroir de ligne une case plus près : depuis la case de départ habituelle, tu atterrirais dans le mur.",
+        "Il faut d'abord régler la distance du miroir de ligne, et le faire avant que le miroir de colonne ne bouche la rangée."
       ],
-      "hint": "Pousse le miroir de ligne d'une rangée vers le haut, et écarte le miroir de colonne.",
-      "solution": "DDRRURRUDLLUU*"
+      "hint": "Monte le miroir de colonne dans ta rangée, repousse le miroir de ligne d'une case, puis décale le miroir de colonne et traverse.",
+      "solution": "DDRURURLDLLUR*UUL*"
     },
     {
       "lot": "Finale du monde",
