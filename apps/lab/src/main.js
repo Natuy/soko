@@ -1,5 +1,6 @@
 // Lab : jeu en version simple, mécaniques, principes et éditeur de niveaux.
 // Les règles, le solveur et les niveaux viennent de packages/core : rien de tout ça n'est défini ici.
+import { renderCharts } from './charts.js';
 import { sticky, parseLevel, add, translate, step, teleportPlan, actionDir, teleport, isWin, applyMove, AN, LEVELS } from '../../../packages/core/src/index.js';
 
 // Textes pédagogiques, rangés par nom de niveau (ils sont stockés avec chaque niveau dans /levels).
@@ -368,7 +369,7 @@ $('wrap').addEventListener('pointerup', e => {
   move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
 });
 // Redimensionnement : on redessine le plan de l'éditeur, et le plateau s'il n'a pas encore été joué
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!history.length && !rp) build(); if (!$('tab-edit').hidden) edRender(true); }, 200); });
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!history.length && !rp) build(); if (!$('tab-edit').hidden) edRender(true); if (!$('tab-table').hidden) tblRender(); }, 200); });
 function showTab(name) {
   for (const n of ['play', 'mech', 'princ', 'ideas', 'edit', 'table']) { $('tab-' + n).hidden = n !== name; $('tb-' + n).classList.toggle('on', n === name); }
   if (name !== 'play' && rp) { rp.playing = false; rpUI(); }
@@ -764,15 +765,16 @@ const tblStage = L => /finale/i.test(L.lot) ? 'Finale' : L.stage || 'Autre';
 function tblInfo(L, i) {
   const r = evalCache.get(mapKey(L.map)), info = { L, i, r, stage: tblStage(L), alerts: [] };
   if (!r) return { ...info, status: 'pending' };
-  if (r.errors || r.unsolvable || r.over) return { ...info, status: 'error', alerts: [{ red: true, txt: r.errors ? r.errors.join(' ') : r.unsolvable ? 'impossible' : 'trop d\'états' }] };
+  if (r.errors || r.unsolvable || r.over) return { ...info, status: 'error', alerts: [{ red: true, kind: 'erreur', txt: r.errors ? r.errors.join(' ') : r.unsolvable ? 'impossible' : 'trop d\'états' }] };
   // objectifs des Principes : ≥ 2 choix forts hors découverte, ≥ 3 pour une finale
   const finale = info.stage === 'Finale', discovery = !finale && (!L.stage || L.stage === 'Découverte');
   const few = !discovery && r.strong < (finale ? 3 : 2);
-  if (few) info.alerts.push({ red: true, txt: 'peu de choix' + (finale ? ' pour une finale' : '') });
-  if (r.useless.length) info.alerts.push({ red: true, txt: 'bloc inutile ×' + r.useless.length, title: r.useless.map(u => u.name + ' (l. ' + (u.r + 1) + ', c. ' + (u.c + 1) + ')').join(', ') });
+  info.discovery = discovery;
+  if (few) info.alerts.push({ red: true, kind: 'peu de choix', txt: 'peu de choix' + (finale ? ' pour une finale' : '') });
+  if (r.useless.length) info.alerts.push({ red: true, kind: 'bloc inutile', txt: 'bloc inutile ×' + r.useless.length, title: r.useless.map(u => u.name + ' (l. ' + (u.r + 1) + ', c. ' + (u.c + 1) + ')').join(', ') });
   // une alerte par mécanique (les quatre orientations du demi-carré n'en font qu'une)
-  for (const n of r.notEss.filter((n, k, all) => all.findIndex(m => m.name === n.name) === k)) info.alerts.push({ txt: n.name + ' non indispensable', title: 'remplacer par ' + n.toName + ' laisse le niveau résoluble' });
-  if (r.zones.length) info.alerts.push({ txt: 'impasse ×' + r.zones.length });
+  for (const n of r.notEss.filter((n, k, all) => all.findIndex(m => m.name === n.name) === k)) info.alerts.push({ kind: 'mécanique non indispensable', txt: n.name + ' non indispensable', title: 'remplacer par ' + n.toName + ' laisse le niveau résoluble' });
+  if (r.zones.length) info.alerts.push({ kind: 'impasse superflue', txt: 'impasse ×' + r.zones.length });
   return { ...info, status: 'ok', few, len: r.len, strong: r.strong, weak: r.weak, explore: r.explore, exploreMoments: r.exploreMoments, dead: Math.round(100 * r.dead / r.total) };
 }
 function tblRows() {
@@ -809,6 +811,12 @@ function tblRender() {
   });
   t.querySelectorAll('[data-play]').forEach(b => b.onclick = () => { showTab('play'); go(+b.dataset.play); scrollTo(0, 0); });
   t.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { edLoad(+b.dataset.edit); showTab('edit'); scrollTo(0, 0); });
+  // graphiques : les niveaux affichés et évalués, toujours dans l'ordre du jeu
+  const chartRows = rows.filter(x => x.status === 'ok').sort((a, b) => a.i - b.i).map(x => {
+    const wi = WORLDS.indexOf(x.L.world);
+    return { ...x, name: x.L.name, group: tblWorld < 0 ? wi : x.L.lot, groupLabel: tblWorld < 0 ? 'Monde ' + (wi + 1) : x.L.lot, groupShort: tblWorld < 0 ? 'M' + (wi + 1) : x.L.lot.split(' ').map(w => w[0]).join('').slice(0, 3) };
+  });
+  renderCharts($('tbl-charts'), chartRows, rows.length, i => { showTab('play'); go(i); scrollTo(0, 0); });
   const inScope = LEVELS.filter(L => tblWorld < 0 || L.world === WORLDS[tblWorld]), done = inScope.filter(L => evalCache.has(mapKey(L.map))).length;
   const withAl = inScope.map((L, k) => tblInfo(L, k)).filter(x => x.alerts.length).length;
   $('tbl-count').textContent = rows.length + ' / ' + scope + ' niveau' + (scope > 1 ? 'x' : '') + ' affiché' + (rows.length > 1 ? 's' : '') + ' · ' + done + ' évalué' + (done > 1 ? 's' : '') + ' · ' + withAl + ' avec alertes';
