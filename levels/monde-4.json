@@ -135,19 +135,19 @@
       "name": "Miroir en bagage",
       "map": [
         "############",
-        "######....##",
-        "######....##",
-        "#P!.=#....##",
+        "######O...##",
+        "######..S.##",
+        "#P!.=#..S.##",
         "############",
         "######..E###",
         "############"
       ],
       "teach": [
         "Pour le faisceau d'un miroir de ligne, un miroir de colonne est un bloc comme un autre : il part avec toi.",
-        "De l'autre côté du mur, il sert à nouveau, dans sa colonne."
+        "De l'autre côté du mur, il sert à nouveau, dans sa colonne. Encore faut-il pouvoir se placer au-dessus de lui : les carrés gênent, et le trou doit être bouché."
       ],
-      "hint": "Téléporte-toi avec le miroir de colonne, puis place-toi deux cases au-dessus de lui.",
-      "solution": "*UUL*RR"
+      "hint": "Traverse le miroir de ligne avec le miroir de colonne, dégage les carrés en bouchant le trou du haut avec l'un d'eux, puis traverse le miroir de colonne depuis le trou bouché.",
+      "solution": "*RURULLL*RR"
     },
     {
       "lot": "Miroirs de ligne et de colonne",
@@ -250,20 +250,20 @@
         "##########",
         "######.DE#",
         "######+.##",
-        "######O.##",
-        "####.#.M.#",
-        "######...#",
-        "#PI.M#..##",
-        "######..##",
+        "#####...##",
+        "####.#OM.#",
+        "####O#...#",
+        "#PI.MO..##",
+        "###.....##",
         "##########"
       ],
       "teach": [
-        "Finale du monde 4 : deux téléportations à la suite. La première emporte le bloc inamovible de l'autre côté du mur.",
-        "La seconde, par un autre miroir, le place sur l'interrupteur, pendant que le joueur atterrit devant la porte.",
-        "Le trou sous l'interrupteur empêche d'y pousser un bloc : seul un bloc téléporté peut l'atteindre."
+        "Finale du monde 4 : deux miroirs, plusieurs téléportations, et le bloc inamovible à faire voyager.",
+        "Le bloc inamovible ne se pousse pas : il traverse le premier miroir avec toi, puis le second l'envoie boucher le trou de la colonne.",
+        "Le second miroir, lui, se pousse : une fois le trou bouché, il monte jusqu'à l'interrupteur, et sert une dernière fois de passage vers la porte."
       ],
-      "hint": "D'abord : te téléporter avec le bouton d'action. Ensuite : pousser le miroir vers la gauche.",
-      "solution": "*URULDDDL*RR"
+      "hint": "Traverse le premier miroir avec le bloc inamovible, place le second miroir sous lui pour l'envoyer dans le trou, puis pousse ce miroir jusqu'à l'interrupteur.",
+      "solution": "*U*DRDLDDL*D*UUU*RR"
     }
   ]
 }

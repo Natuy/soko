@@ -232,20 +232,19 @@
       "name": "Sortie occupée",
       "map": [
         "###########",
-        "#........##",
-        "#P.S....O.#",
-        "#########.#",
-        "##OQR.....#",
+        "#....RO...#",
+        "#P.S......#",
+        "#####R.##.#",
+        "##OQR.O...#",
         "###########"
       ],
       "teach": [
         "La sortie reste visible sous un bloc : il faut la dégager.",
-        "Le pendule permet de déplacer un rond qu'on ne peut pas atteindre directement.",
-        "Synthèse : un pont pour ouvrir le chemin, puis un pendule pour libérer la sortie.",
-        "Piège : poussé vers la gauche, le carré finit coincé contre le mur."
+        "Le pendule déplace un rond qu'on ne peut pas atteindre directement : poussé contre son voisin, il le fait rouler à sa place, jusqu'au trou.",
+        "Synthèse : un carré pour faire le pont, puis un pendule pour libérer la sortie. Pour pousser le carré vers le bas, il faut d'abord boucher le trou du haut avec un rond."
       ],
-      "hint": "Bouche le trou avec le carré, fais le tour, et pousse le rond de droite vers la gauche.",
-      "solution": "RRRRRRRRDDLLLLLLL"
+      "hint": "Pousse le carré au bout de la rangée, bouche le trou du haut avec le rond pour te placer au-dessus du carré, pousse-le dans le trou, puis lance le pendule vers la gauche.",
+      "solution": "RRRRLURRDDDLLLL"
     },
     {
       "lot": "Le déflecteur",

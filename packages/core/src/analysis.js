@@ -94,6 +94,18 @@ const AN = (function () {
     }
     return dec;
   }
+  // Une mécanique est indispensable si la remplacer par b rend le niveau impossible.
+  // Pièces restrictives (inamovible, demi-carrés) : un carré peut tout ce qu'elles peuvent, donc le niveau
+  // reste toujours résoluble. On demande alors que la contrainte compte : avec un carré à la place,
+  // la solution la plus courte doit être plus courte (la contrainte impose un détour).
+  const RESTRICT = new Set(['I', '^', 'v', '<', '>']);
+  function essential(m, a, b, len) {
+    const sub = m.map(r => r.split(a).join(b));
+    if (!RESTRICT.has(a)) return !solvable(sub, 80000);
+    if (len === undefined) { const r0 = solve(m, 80000); if (r0.sol === undefined) return true; len = r0.sol.length; }
+    const r = solve(sub, 80000);
+    return r.sol === undefined || r.sol.length < len;
+  }
   const setCell = (m, r, c, ch) => { m = m.slice(); m[r] = m[r].slice(0, c) + ch + m[r].slice(c + 1); return m; };
   const solvable = (m, cap) => { const r = solve(m, cap || 60000); return !!r.sol || r.sol === ''; };
   function evaluate(map, opts) {
@@ -111,15 +123,23 @@ const AN = (function () {
     const useless = []; let n = 0;
     const blocks = []; map.forEach((row, r) => [...row].forEach((ch, c) => { if (BLOCKCH.has(ch)) blocks.push([r, c, ch]); }));
     for (const [r, c, ch] of blocks) { post('Utilité des blocs : ' + (++n) + ' / ' + blocks.length); if (solvable(setCell(map, r, c, '.'), 80000)) useless.push({ r, c, ch, name: NAMES[ch] }); }
+    // Leurre : un bloc retirable alors qu'un bloc du même genre est indispensable. C'est une alternative crédible
+    // au bon bloc (même rôle possible, mauvais choix), permise par les principes. Deux blocs interchangeables,
+    // dont aucun n'est indispensable, restent inutiles.
+    const needed = new Set(blocks.filter(([r, c]) => !useless.some(u => u.r === r && u.c === c)).map(([, , ch]) => NAMES[ch]));
+    // et il doit créer des choix : sans lui, le niveau perd des choix forts ou faibles (sinon c'est un simple obstacle)
+    const givesChoices = u => { const e2 = explore(setCell(map, u.r, u.c, '.'), cap); if (!e2 || e2.error || e2.over || e2.unsolvable) return false; const d2 = choices(e2); return d2.filter(([o, v]) => o >= 3 && v < o).length < strong || d2.filter(([o, v]) => o >= 2 && v < o).length < weak; };
+    const decoys = useless.filter(u => needed.has(u.name) && givesChoices(u));
+    useless.splice(0, useless.length, ...useless.filter(u => !decoys.includes(u)));
     const notEss = [];
     for (const [a, b] of REPL) {
       if (!map.some(r => r.includes(a))) continue;
       post('Mécaniques indispensables : ' + NAMES[a]);
-      if (solvable(map.map(r => r.split(a).join(b)), 80000)) notEss.push({ from: a, to: b, name: NAMES[a], toName: b === '#' ? 'mur' : b === '.' ? 'sol' : NAMES[b] });
+      if (!essential(map, a, b, ex.sol.length)) notEss.push({ from: a, to: b, name: NAMES[a], toName: b === '#' ? 'mur' : b === '.' ? 'sol' : NAMES[b] });
     }
     post('Zones superflues…');
     const sup = superfluous(map, { strong, weak, total: ex.total, st: ex.st, path: ex.path }, post);
-    return { sol: ex.sol, len: ex.sol.length, total: ex.total, dead: ex.dead, dec, strong, weak, explore: gestures, exploreMoments, useless, notEss, zones: sup.zones, minorCells: sup.minor, trimmed: sup.trimmed };
+    return { sol: ex.sol, len: ex.sol.length, total: ex.total, dead: ex.dead, dec, strong, weak, explore: gestures, exploreMoments, useless, decoys, notEss, zones: sup.zones, minorCells: sup.minor, trimmed: sup.trimmed };
   }
 
   // Zones superflues : cases (sol ou trou) qu'on peut murer sans rendre le niveau impossible ni perdre de choix.
@@ -177,7 +197,7 @@ const AN = (function () {
     orig.forEach((row, r) => [...row].forEach((ch, c) => { if ('MZ=!ITD+%/\\E'.includes(ch)) for (const [dr, dc] of [[0, 0], [0, 1], [0, -1], [1, 0], [-1, 0]]) PROTECT.add((r + dr) + ',' + (c + dc)); }));
     const EXEMPT = new Set();
     orig.forEach((row, r) => [...row].forEach((ch, c) => { if ('MZ=!I^v<>'.includes(ch) && solvable(setCell(orig, r, c, '.'))) EXEMPT.add(r + ',' + c + ch); }));
-    const ess = REPL.filter(([a, b]) => orig.some(r => r.includes(a)) && !solvable(orig.map(r => r.split(a).join(b))));
+    const ess = REPL.filter(([a, b]) => orig.some(r => r.includes(a)) && essential(orig, a, b));
     const pieces = [...new Set(orig.join('').split('').filter(ch => 'SRBCG^v<>'.includes(ch)))];
     function evalm(m) {
       const ex = explore(m, 25000); if (!ex || ex.error || ex.over || ex.unsolvable) return null;
@@ -191,7 +211,7 @@ const AN = (function () {
     const allUseful = m => { for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) if (BLOCKCH.has(m[r][c]) && !EXEMPT.has(r + ',' + c + m[r][c]) && solvable(setCell(m, r, c, '.'))) return false; return true; };
     const e0 = evalm(orig); if (!e0) return { error: 'Le niveau de départ doit être résoluble (et pas trop grand pour l\'ajustement).' };
     const sig0 = e0.sig;
-    const ok = (m, ev) => [...sig0].every(x => ev.sig.has(x)) && ess.every(([a, b]) => !solvable(m.map(r => r.split(a).join(b)))) && allUseful(m);
+    const ok = (m, ev) => [...sig0].every(x => ev.sig.has(x)) && ess.every(([a, b]) => essential(m, a, b, ev.len)) && allUseful(m);
     function mutate(m) {
       for (let tries = 0; tries < 50; tries++) {
         const r = 1 + rnd(H - 2), c = 1 + rnd(W - 2), ch = m[r][c], k = rnd(7);
