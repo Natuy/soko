@@ -176,7 +176,7 @@
   .ed-errors { color: #b3261e; font-size: .85rem; } .ed-errors p { margin: 2px 0; }
   .ed-status { font-size: .82rem; color: var(--muted); min-height: 1.2em; margin: 6px 0 0; }
   .ed-sol { font-size: .95rem; word-break: break-all; letter-spacing: .04em; }
-  .ed-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 4px 0 10px; }
+  .ed-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 6px; margin: 4px 0 10px; }
   .ed-kpis div { background: var(--bg); border-radius: 10px; padding: 8px 4px; text-align: center; line-height: 1.15; }
   .ed-kpis b { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
   .ed-kpis span { font-size: .7rem; color: var(--muted); }
@@ -324,3 +324,12 @@
   .ch-note { font-size: .72rem; color: var(--muted); }
   .tbl .al.note { background: var(--bg); color: var(--muted); }
   .ed-mark.decoy { border: 3px solid var(--round); }
+  /* Composition des gestes : perdants, gagnants (choix fort, faible, imposés), exploration */
+  .charts { --p-lose: #eb6834; --p-strong: #2a78d6; --p-weak: #1baf7a; --p-forced: #d8d2c6; --p-explo: #eda100; }
+  .ch-seg.p-lose, .sw.p-lose { fill: var(--p-lose); background: var(--p-lose); }
+  .ch-seg.p-strong, .sw.p-strong { fill: var(--p-strong); background: var(--p-strong); }
+  .ch-seg.p-weak, .sw.p-weak { fill: var(--p-weak); background: var(--p-weak); }
+  .ch-seg.p-forced, .sw.p-forced { fill: var(--p-forced); background: var(--p-forced); }
+  .ch-seg.p-explo, .sw.p-explo { fill: var(--p-explo); background: var(--p-explo); }
+  .ch-stack.hot .ch-seg { filter: brightness(.85); }
+  .ch-legend-row { margin: 2px 0 6px; }

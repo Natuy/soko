@@ -114,7 +114,7 @@ function levelStrips(root, rows, onPick) {
       const box = gr.svg.getBoundingClientRect(), i = Math.floor((e.clientX - box.left - padL) / slot);
       if (i < 0 || i >= n) { mark(-1); hideTip(); return; }
       mark(i); const r = rows[i];
-      showTip(root, e, [['', (r.i + 1) + '. ' + r.name, true], [r.len, 'coups'], [r.strong, 'choix forts' + (r.few ? ' · sous l\'objectif' : '')], [r.weak, 'choix faibles'], [r.explore, 'gestes d\'exploration'], ['', r.L.lot + (r.L.stage ? ' · ' + r.L.stage : '')]]);
+      showTip(root, e, [['', (r.i + 1) + '. ' + r.name, true], [r.len, 'coups'], [r.strong, 'choix forts' + (r.few ? ' · sous l\'objectif' : '')], [r.weak, 'choix faibles'], [r.explore, 'gestes d\'exploration'], [r.losing, 'coups perdants'], ['', r.L.lot + (r.L.stage ? ' · ' + r.L.stage : '')]]);
     });
     hit.addEventListener('pointerleave', () => { mark(-1); hideTip(); });
     hit.addEventListener('click', e => { const box = gr.svg.getBoundingClientRect(), i = Math.floor((e.clientX - box.left - padL) / slot); if (rows[i]) onPick(rows[i].i); });
@@ -175,6 +175,72 @@ function alertBars(root, rows) {
   });
 }
 
+// Composition des gestes le long de la solution, en part du total, un niveau par colonne.
+// Choix forts et faibles sont des moments : on y compte les gestes gagnants qu'ils offrent.
+const PARTS = [
+  ['losing', 'gestes perdants', 'p-lose'],
+  ['winStrong', 'gagnants, choix fort', 'p-strong'],
+  ['winWeak', 'gagnants, choix faible', 'p-weak'],
+  ['forced', 'gagnants imposés (pas de perdant)', 'p-forced'],
+  ['explore', 'exploration (gestes à défaire)', 'p-explo'],
+];
+function parts(r) {
+  const p = { losing: 0, winStrong: 0, winWeak: 0, forced: 0, explore: 0 };
+  for (const [o, v, , all] of r.dec || []) {
+    p.losing += o - v; p.explore += all - o;
+    if (v === o) p.forced += v; else if (o >= 3) p.winStrong += v; else p.winWeak += v;
+  }
+  p.total = PARTS.reduce((a, [k]) => a + p[k], 0);
+  return p;
+}
+function composition(root, rows, onPick) {
+  const card = html('div', 'ch-card ch-wide', root);
+  html('h4', '', card, 'Composition des gestes');
+  const data = rows.map(r => ({ r, p: parts(r) })), tot = { total: 0 };
+  for (const [k] of PARTS) tot[k] = data.reduce((a, d) => a + d.p[k], 0);
+  tot.total = PARTS.reduce((a, [k]) => a + tot[k], 0);
+  html('p', 'ch-sub', card, 'Tous les gestes possibles le long de la solution (pousser, téléporter), répartis par nature. Une colonne par niveau, en part de ses gestes.');
+  const lg = html('div', 'ch-legend ch-legend-row', card);
+  for (const [k, label, cls] of PARTS) { const it = html('span', 'ch-key', lg); html('i', 'sw ' + cls, it); html('span', '', it, label + ' · ' + (tot.total ? Math.round(100 * tot[k] / tot.total) : 0) + ' %'); }
+  const W = Math.max(300, card.clientWidth - 2), H = 150, padL = 34, padR = 8, top = 8, base = H - 4, n = rows.length;
+  const slot = (W - padL - padR) / n, bw = Math.max(1, Math.min(24, slot * 0.72)), xOf = i => padL + i * slot + (slot - bw) / 2;
+  const svg = el('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, class: 'ch-svg', role: 'img', 'aria-label': 'Composition des gestes par niveau (détail dans le tableau ci-dessous)' }, card);
+  const yOf = f => base - (base - top) * f;
+  for (const f of [0, 0.5, 1]) {
+    el('line', { x1: padL, x2: W - padR, y1: yOf(f), y2: yOf(f), class: f ? 'ch-grid' : 'ch-base' }, svg);
+    el('text', { x: padL - 6, y: yOf(f) + 3, class: 'ch-tick', 'text-anchor': 'end' }, svg).textContent = Math.round(f * 100) + ' %';
+  }
+  rows.forEach((r, i) => { if (i && r.group !== rows[i - 1].group) el('line', { x1: padL + i * slot, x2: padL + i * slot, y1: top - 4, y2: base, class: 'ch-sep' }, svg); });
+  const cols = [];
+  data.forEach(({ p }, i) => {
+    const g = el('g', { class: 'ch-stack' }, svg); cols.push(g);
+    if (!p.total) return;
+    const segs = PARTS.map(([k, , cls]) => [p[k], cls]).filter(([v]) => v > 0);
+    let acc = 0;
+    segs.forEach(([v, cls], s) => {
+      const y0 = yOf(acc / p.total), y1 = yOf((acc + v) / p.total); acc += v;
+      const last = s === segs.length - 1, gap = !last && y0 - y1 > 4 ? 2 : 0; // 2px de fond entre deux segments
+      const x = xOf(i), yt = y1 + gap, h = y0 - yt;
+      if (h <= 0) return;
+      if (last) { const rr = Math.min(4, bw / 2, h); el('path', { d: `M${x},${y0}V${yt + rr}Q${x},${yt} ${x + rr},${yt}H${x + bw - rr}Q${x + bw},${yt} ${x + bw},${yt + rr}V${y0}Z`, class: 'ch-seg ' + cls }, g); }
+      else el('rect', { x, y: yt, width: bw, height: h, class: 'ch-seg ' + cls }, g);
+    });
+  });
+  const hit = el('rect', { x: padL, y: 0, width: W - padL - padR, height: base + 4, class: 'ch-hit' }, svg);
+  let cur = -1;
+  const at = e => Math.floor((e.clientX - svg.getBoundingClientRect().left - padL) / slot);
+  hit.addEventListener('pointermove', e => {
+    const i = at(e);
+    if (cur >= 0) cols[cur].classList.remove('hot');
+    if (i < 0 || i >= n) { cur = -1; hideTip(); return; }
+    cur = i; cols[i].classList.add('hot');
+    const { r, p } = data[i], pc = v => p.total ? Math.round(100 * v / p.total) + ' %' : '–';
+    showTip(root, e, [['', (r.i + 1) + '. ' + r.name, true], ...PARTS.map(([k, label]) => [p[k], label + ' (' + pc(p[k]) + ')']).reverse(), [p.total, 'gestes au total']]);
+  });
+  hit.addEventListener('pointerleave', () => { if (cur >= 0) cols[cur].classList.remove('hot'); cur = -1; hideTip(); });
+  hit.addEventListener('click', e => { const i = at(e); if (rows[i]) onPick(rows[i].i); });
+}
+
 // Chiffres clés de la sélection
 function kpis(root, rows, scope) {
   const row = html('div', 'ch-kpis', root);
@@ -186,6 +252,7 @@ function kpis(root, rows, scope) {
   tile(low, 'sous l\'objectif de choix', 'moins de 2 choix forts (3 pour une finale), hors découverte');
   tile(noExp, 'sans exploration', 'aucun geste à essayer puis défaire le long de la solution');
   tile(med(rows.map(r => r.explore)), 'exploration médiane');
+  tile(med(rows.map(r => r.losing)), 'coups perdants (médiane)', 'gestes qui rendent le niveau impossible, le long de la solution');
 }
 
 export function renderCharts(root, rows, scope, onPick) {
@@ -193,6 +260,7 @@ export function renderCharts(root, rows, scope, onPick) {
   if (!rows.length) { html('p', 'ch-sub', root, 'Évalue les niveaux (bouton ci-dessus) pour afficher les graphiques.'); return; }
   kpis(root, rows, scope);
   levelStrips(root, rows, onPick);
+  composition(root, rows, onPick);
   const two = html('div', 'ch-two', root);
   profile(two, rows, onPick);
   alertBars(two, rows);
