@@ -25,19 +25,20 @@
       "name": "Le mauvais demi",
       "map": [
         "########",
-        "#..P####",
+        "#..PO.##",
         "#..##..#",
-        "#.O....#",
-        "#.^^##E#",
+        "#.O..O.#",
+        "#.^^SSE#",
         "#....O.#",
         "########"
       ],
       "teach": [
         "Pas de marche arrière : un demi-carré mal poussé ne revient jamais.",
-        "Les deux demi-carrés se ressemblent, mais un seul est utile. L'autre, poussé, bouche définitivement le couloir."
+        "Les deux demi-carrés se ressemblent, mais un seul est utile : celui qui peut monter boucher le trou de gauche. L'autre, poussé, bouche définitivement le passage.",
+        "Les deux carrés comblent les trous de droite, chacun le sien : l'ordre compte."
       ],
-      "hint": "Passe par la gauche et pousse vers le haut le demi-carré qui est sous le trou.",
-      "solution": "LDLDDDRUURRRRD"
+      "hint": "Monte le carré de gauche d'une case, comble le trou de gauche avec le bon demi-carré, puis les deux trous de droite avec les carrés.",
+      "solution": "LDLDDDRRRUDLLUURRRDR"
     },
     {
       "lot": "Le demi-carré",
@@ -45,20 +46,20 @@
       "name": "La rangée imposée",
       "map": [
         "##########",
-        "#.....OO.#",
+        "#...O.OO.#",
         "#..S..OO.#",
-        "#P....OOE#",
+        "##P...OOE#",
         "#.>...OO.#",
         "#.....OO.#",
         "##########"
       ],
       "teach": [
         "Le demi-carré impose sa rangée : il ne peut aller que tout droit.",
-        "Le carré, lui, est libre : c'est à lui de rejoindre la rangée du demi-carré.",
+        "Le carré, lui, est libre : c'est à lui de rejoindre la rangée du demi-carré pour combler le premier trou. Le demi-carré comblera le second.",
         "Piège : utiliser le carré dans une autre rangée rend le niveau impossible."
       ],
-      "hint": "Pousse le demi-carré dans la première colonne de trous, puis amène le carré dans la même rangée.",
-      "solution": "DRRRRUUULLDDLDRRRRRRU"
+      "hint": "Descends le carré dans la rangée du demi-carré et pousse-le dans le premier trou, puis pousse le demi-carré jusqu'au second.",
+      "solution": "UURDLDRURDLDRRDLLLLURRRRRRRU"
     },
     {
       "lot": "Le demi-carré",

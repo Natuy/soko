@@ -101,18 +101,19 @@
       "name": "Deux pressions",
       "map": [
         "###########",
-        "#....######",
+        "#...O######",
         "#....###E##",
-        "#PS.%TZ.O##",
+        "#PSS%TZ.O##",
         "#...#######",
         "###########"
       ],
       "teach": [
-        "Le même miroir sert deux fois : d'abord pour le carré, ensuite pour toi.",
-        "Poussé le long de la ligne du miroir, le carré t'entraîne avec lui, et ta case d'arrivée est un mur : il faut le faire arriver sur le losange par un autre côté."
+        "Le même miroir sert deux fois : d'abord pour un carré, ensuite pour toi.",
+        "Poussé le long de la ligne du miroir, un carré t'entraîne avec lui, et ta case d'arrivée est un mur : il faut le faire arriver sur le losange par le haut.",
+        "Il y a deux carrés : l'un part par le miroir, l'autre doit d'abord boucher le trou du haut pour te laisser passer."
       ],
-      "hint": "D'abord : pousser le carré vers le haut. Ensuite : pousser le carré vers la droite.",
-      "solution": "DRULURRURDDU"
+      "hint": "Monte les deux carrés, comble le trou du haut avec l'un, pousse l'autre sur le losange par le haut, puis marche toi-même sur le losange.",
+      "solution": "DRUDRULURLLURRRDDU"
     },
     {
       "lot": "Miroir à interrupteur",
@@ -120,22 +121,22 @@
       "name": "Commande à distance",
       "map": [
         "##########",
-        "#P...#I###",
-        "#....#.###",
-        "#..%.#Z###",
-        "#......###",
-        "#....#+###",
-        "##D#######",
+        "#P.O.#I###",
+        "#OS..S.###",
+        "#....#Z###",
+        "#O.....###",
+        "#.#%.#+###",
+        "#ODO######",
         "##E#######",
         "##########"
       ],
       "teach": [
-        "Le miroir à interrupteur déplace des blocs sans que le joueur soit dans le faisceau : le bloc inamovible atterrit sur l'interrupteur de la porte.",
-        "Le joueur peut presser lui-même l'interrupteur de miroir. Le déclenchement a lieu au moment où il se pose dessus, et le bloc reste où il a atterri.",
-        "Piège : le miroir est accessible par le bas. Déplacé, il n'enverra plus le bloc sur l'interrupteur."
+        "Le miroir à interrupteur déplace des blocs sans que le joueur soit dans le faisceau : en marchant sur le losange, tu envoies le bloc inamovible sur l'interrupteur de la porte.",
+        "Mais il se redéclenche à chaque nouvelle pression : un carré poussé sur le losange renverrait le bloc ailleurs. Une fois le bloc posé, écarte le miroir.",
+        "Deux trous barrent le chemin de la porte : il faut un carré pour chacun, le second en passant par le losange."
       ],
-      "hint": "Marche sur le losange.",
-      "solution": "DDRRDDLDD"
+      "hint": "Marche sur le losange, puis pousse le miroir vers le haut. Comble ensuite les trous avec les deux carrés, le second en le faisant passer par le losange.",
+      "solution": "RDRDDDURRRUULLLLLDRURDDDDLD"
     },
     {
       "lot": "Ce que voit le miroir",

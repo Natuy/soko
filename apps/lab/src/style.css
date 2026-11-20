@@ -322,3 +322,5 @@
   .ch-tip-row { display: flex; gap: 6px; color: var(--muted); }
   .ch-tip-row b { color: var(--ink); min-width: 18px; text-align: right; font-variant-numeric: tabular-nums; }
   .ch-note { font-size: .72rem; color: var(--muted); }
+  .tbl .al.note { background: var(--bg); color: var(--muted); }
+  .ed-mark.decoy { border: 3px solid var(--round); }
